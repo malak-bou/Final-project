@@ -1,6 +1,6 @@
-# University Course Management System
+# GIG Algeria E-Learning Platform
 
-A comprehensive web application for managing university courses, materials, and student progress. Built with FastAPI, SQLAlchemy, and modern web technologies.
+A comprehensive e-learning platform for GIG Algeria, designed to manage courses, training materials, and employee progress. Built with FastAPI, SQLAlchemy, and modern web technologies.
 
 ## Features
 
@@ -11,12 +11,12 @@ A comprehensive web application for managing university courses, materials, and 
 - Profile management
 
 ### Course Management
-- Create, read, update, and delete courses
+- Create, read, update, and delete training courses
 - Role-based course access:
   - Admins: Full access to all courses
   - Professors: Access to their own courses and departmental courses
   - Employers: Access to departmental courses only
-- Course materials upload and management
+- Training materials upload and management
 - Course progress tracking
 
 ### Communication
@@ -24,15 +24,15 @@ A comprehensive web application for managing university courses, materials, and 
 - File attachments in messages
 - Notification system for:
   - New course creation
-  - Course material updates
+  - Training material updates
   - Course progress updates
   - Course deletion
 
 ### Dashboard
 - Role-specific dashboards:
   - Admin Dashboard: User management, system overview
-  - Professor Dashboard: Course management, student progress
-  - Employer Dashboard: Course browsing, student tracking
+  - Professor Dashboard: Course management, employee progress
+  - Employer Dashboard: Course browsing, employee tracking
 
 ## API Endpoints
 
@@ -52,7 +52,7 @@ A comprehensive web application for managing university courses, materials, and 
 - `POST /courses/` - Create new course (professors only)
 - `PUT /courses/{course_id}` - Update course
 - `DELETE /courses/{course_id}` - Delete course
-- `POST /courses/{course_id}/materials/` - Upload course material
+- `POST /courses/{course_id}/materials/` - Upload training material
 - `GET /courses/{course_id}/materials/` - List course materials
 - `POST /courses/{course_id}/enroll` - Enroll in a course
 - `PUT /courses/{course_id}/complete` - Mark course as completed
