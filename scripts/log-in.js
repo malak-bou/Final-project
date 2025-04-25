@@ -53,3 +53,38 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 });
+
+document.getElementById("login-form").addEventListener("submit", async function (e) {
+  e.preventDefault();
+
+  const credentials = {
+    email: document.getElementById("email").value,
+    password: document.getElementById("password").value
+  };
+
+  try {
+    const response = await fetch("http://127.0.0.1:8000/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(credentials)
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      alert("Connexion réussie !");
+      // Stocker le token si nécessaire
+      localStorage.setItem("token", data.token);
+      // Redirection vers la page d'accueil ou tableau de bord
+      window.location.href = "dashboard.html";
+    } else {
+      alert("Erreur : " + data.detail);
+    }
+
+  } catch (err) {
+    console.error("Erreur de requête :", err);
+    alert("Impossible de contacter le serveur.");
+  }
+});
