@@ -3,7 +3,7 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from datetime import timedelta, datetime
-from typing import Annotated, List
+from typing import Annotated, List, Optional
 import json
 import os
 from fastapi.responses import FileResponse
@@ -741,7 +741,7 @@ async def send_message(
     db: Session = Depends(get_db),
     content: str = Form(...),
     receiver_id: int = Form(...),
-    file: UploadFile = File(None)
+    file: Optional[UploadFile] = File(None)
 ):
     # Verify receiver exists
     receiver = db.query(User).filter(User.id == receiver_id).first()

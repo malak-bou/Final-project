@@ -1,7 +1,6 @@
 from sqlalchemy.orm import Session
 from database import SessionLocal, engine
-from models.user import User, Base
-from models.course import Course
+from models import Base, User
 from auth import get_password_hash
 
 # Create all tables

@@ -5,7 +5,7 @@ from datetime import datetime
 class UserBase(BaseModel):
     nom: str
     prenom: str
-    departement: str
+    departement: Optional[str] = None
     role: str
     email: EmailStr
     telephone: str
@@ -39,7 +39,7 @@ class TokenData(BaseModel):
 class CourseBase(BaseModel):
     title: str
     description: str
-    departement: str
+    departement: Optional[str] = None
 
 class CourseCreate(CourseBase):
     pass
