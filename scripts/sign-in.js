@@ -31,3 +31,37 @@ const togglePassword = document.querySelector(".toggle-password");
             window.location.href = "../pages/log-in.html";
         });
     }
+document.getElementById("register-form").addEventListener("submit", async function (e) {
+  e.preventDefault();
+
+  const user = {
+    nom: document.getElementById("nom").value,
+    prenom: document.getElementById("prenom").value,
+    email: document.getElementById("email").value,
+    password: document.getElementById("password").value
+  };
+
+  try {
+    const response = await fetch("http://127.0.0.1:8000/register", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(user)
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      alert("Compte créé avec succès !");
+      // Redirection vers la page de connexion
+      window.location.href = "log-in.html";
+    } else {
+      alert("Erreur : " + data.detail);
+    }
+
+  } catch (err) {
+    console.error("Erreur de requête :", err);
+    alert("Impossible de contacter le serveur.");
+  }
+});
