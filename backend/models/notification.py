@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String, Text, ForeignKey, DateTime, Boolean
 from sqlalchemy.orm import relationship
 from datetime import datetime
-from .user import Base
+from .base import Base
 
 class Notification(Base):
     __tablename__ = "notifications"
