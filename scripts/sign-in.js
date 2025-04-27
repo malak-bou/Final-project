@@ -28,48 +28,36 @@ const togglePassword = document.querySelector(".toggle-password");
 
 
 
+    const departementSelect = document.getElementById("departement");
+    const departementChoisi = departementSelect.value;
+    console.log("Département choisi :", departementChoisi);
+    
+    departementSelect.addEventListener("change", function() {
+        console.log("Nouvelle sélection :", this.value);
+      });
 
-document.getElementById("register-form").addEventListener("submit", async function (e) {
-  e.preventDefault();
+      
+      const form = document.getElementById('signupForm');
+    const emailInput = document.getElementById('email');
+    const emailError = document.getElementById('emailError');
+    const emailRegex = /^[a-z]+(?:\.[a-z]+)*@GIG\.com$/;
 
-  const user = {
-    nom: document.getElementById("nom").value,
-    prenom: document.getElementById("prenom").value,
-    departement: document.getElementById("departement").value,
-    role: document.getElementById("role").value,
-    email: document.getElementById("email").value,
-    telephone: document.getElementById("telephone").value,
-    password: document.getElementById("password").value,
-    confirm_password: document.getElementById("confirmer-password").value
-  };
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const email = emailInput.value.trim();
+        
+        if (!emailRegex.test(email)) {
+            emailError.style.display = 'block';
+            emailInput.focus();
+            return;
+        }
 
-  try {
-    const response = await fetch("https://backend-m6sm.onrender.com/register", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(user)
+        emailError.style.display = 'none';
+        // Le formulaire peut être envoyé ici si tout est valide
+        alert('Inscription réussie !');
+        form.reset(); // Réinitialise le formulaire
     });
 
-    const data = await response.json();
-
-    if (response.ok) {
-      alert("Compte créé avec succès ! En attente d'approbation par l'administrateur.");
-      window.location.href = "../pages/log-in.html";
-    } else {
-      // Handle specific error messages
-      if (data.detail === "Email already registered") {
-        alert("Cette adresse email est déjà utilisée.");
-      } else if (data.detail === "Passwords do not match") {
-        alert("Les mots de passe ne correspondent pas.");
-      } else {
-        alert("Erreur : " + data.detail);
-      }
-    }
-
-  } catch (err) {
-    console.error("Erreur de requête :", err);
-    alert("Impossible de contacter le serveur. Veuillez réessayer plus tard.");
-  }
-});
+    emailInput.addEventListener('input', () => {
+        emailError.style.display = 'none';
+    });
