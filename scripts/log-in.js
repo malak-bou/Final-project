@@ -5,7 +5,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const form = document.querySelector("form");
     const submitButton = form.querySelector('button[type="submit"]');
     let loginAttempts = 0;
-
+    const MAX_LOGIN_ATTEMPTS = 3;
 
     // Fonction pour valider l'email
     function isValidEmail(email) {
@@ -42,7 +42,7 @@ document.addEventListener("DOMContentLoaded", function () {
         togglePassword.addEventListener("click", function () {
             const type = passwordInput.type === "password" ? "text" : "password";
             passwordInput.type = type;
-            togglePassword.textContent = type === "password" ? "👁️" : "👁️‍��️";
+            togglePassword.textContent = type === "password" ? "👁️" : "👁️‍";
         });
     }
 
@@ -60,14 +60,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
         if (!isValidEmail(email)) {
             showError("Veuillez entrer une adresse email valide.");
-            return;
-        }
-
-        // Vérification du nombre de tentatives
-        const lastAttemptTime = localStorage.getItem('lastLoginAttempt');
-        if (lastAttemptTime && Date.now() - parseInt(lastAttemptTime) < LOCKOUT_TIME) {
-            const remainingTime = Math.ceil((LOCKOUT_TIME - (Date.now() - parseInt(lastAttemptTime))) / 60000);
-            showError(`Trop de tentatives. Veuillez réessayer dans ${remainingTime} minutes.`);
             return;
         }
 
@@ -91,7 +83,6 @@ document.addEventListener("DOMContentLoaded", function () {
             if (response.ok) {
                 // Réinitialiser le compteur de tentatives en cas de succès
                 loginAttempts = 0;
-                localStorage.removeItem('lastLoginAttempt');
                 
                 // Stocker le token
                 localStorage.setItem("token", data.access_token);
@@ -131,10 +122,9 @@ document.addEventListener("DOMContentLoaded", function () {
                 }
             } else {
                 loginAttempts++;
-                localStorage.setItem('lastLoginAttempt', Date.now().toString());
                 
                 if (loginAttempts >= MAX_LOGIN_ATTEMPTS) {
-                    showError(`Trop de tentatives. Veuillez réessayer dans 15 minutes.`);
+                    showError("Trop de tentatives. Veuillez réessayer plus tard.");
                 } else {
                     showError(data.detail || "Email ou mot de passe incorrect.");
                 }
