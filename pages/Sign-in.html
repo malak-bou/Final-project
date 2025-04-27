@@ -8,24 +8,27 @@
 </head>
 <body>  
     <div class="container">
-        <!-- Suppression de l’image sur mobile/tablette avec media query -->
+        <!-- Suppression de l'image sur mobile/tablette avec media query -->
         <div class="left-section">
             <img src="../assets/images/doctor.png" alt="Médecin souriant" class="doctor-image">
         </div>
 
         <div class="right-section">
+
             <form class="signup-form" id="signupForm">
+
                 <div class="header">
                     <h2>Entrez votre information</h2>
                 </div>
 
                 <label for="nom">Nom</label>
-                <input type="text" id="nom" placeholder="Nom" required>
+                <input type="text" id="nom" name="nom" placeholder="Nom" required>
 
                 <label for="prenom">Prénom</label>
-                <input type="text" id="prenom" placeholder="Prénom" required>
+                <input type="text" id="prenom" name="prenom" placeholder="Prénom" required>
 
                 <label for="departement">Département</label>
+
                 <select id="departement" required>
                 <option class="graytext" value="" disabled selected >Département</option>
                 <option value="Center Regional Delegation">Center Regional Delegation</option>
@@ -67,25 +70,25 @@
                      Veuillez vous connecter en utilisant votre adresse e-mail d'entreprise (ex. : nom.prenom@GIG.com) 
                 </div>
 
+
                 <label for="telephone">Numéro de téléphone</label>
-                <input type="text" id="telephone" placeholder="Numéro de téléphone" required>
+                <input type="tel" id="telephone" name="telephone" placeholder="Numéro de téléphone" required>
 
                 <label for="password">Mot de passe</label>
                 <div class="password-container">
-                    <input type="password" id="password" placeholder="Entrez votre mot de passe" required>
+                    <input type="password" id="password" name="password" placeholder="Entrez votre mot de passe" required>
                     <span class="toggle-password"><img src="../assets/images/Vector.png" alt="password"></span>
                 </div>
-                <label for="confirmer-password" >Confirmer mot de passe</label>
-                <div class="password-container" >
-                    <input type="password" id="confirmer-password" placeholder="Entrez votre mot de passe" required >
+
+                <label for="confirmer-password">Confirmer mot de passe</label>
+                <div class="password-container">
+                    <input type="password" id="confirmer-password" name="confirm_password" placeholder="Entrez votre mot de passe" required>
                     <span class="toggle-password1"><img src="../assets/images/Vector.png" alt="password"></span>
                 </div>
 
-                
-
                 <div class="footer">
-                    <button type="submit" class="btn-submit">S’inscrire</button>
-                    <p>Vous avez déjà un compte ? <a href="#" class="btn-submit1">Connectez-vous</a></p>
+                    <button type="submit" class="btn-submit">S'inscrire</button>
+                    <p>Vous avez déjà un compte ? <a href="log-in.html" class="btn-submit1">Connectez-vous</a></p>
                 </div>
             </form>
         </div>
