@@ -26,7 +26,6 @@ document.addEventListener("DOMContentLoaded", function () {
     const messagesContainer = document.querySelector(".chat-box");
     const chatHeader = document.querySelector(".chat-header .username");
     const chatAvatar = document.querySelector(".chat-header .avatar img");
-    const recentMessages = document.querySelectorAll(".message.supconvo");
     const messageInput = document.getElementById("messageInput");
     const sendButton = document.getElementById("sendButton");
     const fileInput = document.getElementById("file");
@@ -43,28 +42,34 @@ document.addEventListener("DOMContentLoaded", function () {
 
     let activeContact = null;
     let activeContactId = null;
+    let currentMessageType = "Chat"; // Par défaut
 
     // Charger les utilisateurs au démarrage
     loadUsers();
 
-    // Gestion des types de messages (RH, User, Chat)
+    // Gestion des types de messages
     typeButtons.forEach(button => {
         button.addEventListener("change", function () {
-            if (this.value === "RH") {
-                chatMessagesContainer.style.display = "none";
-                rhMessagesContainer.style.display = "block";
-                profMessagesContainer.style.display = "none";
-                loadRHMessages();
-            } else if (this.value === "Prof") {
-                rhMessagesContainer.style.display = "none";
-                chatMessagesContainer.style.display = "none";
-                profMessagesContainer.style.display = "block";
-                loadStudentMessages();
-            } else {
-                rhMessagesContainer.style.display = "none";
-                chatMessagesContainer.style.display = "block";
-                profMessagesContainer.style.display = "none";
-                loadUsers();
+            currentMessageType = this.value;
+            switch(this.value) {
+                case "RH":
+                    chatMessagesContainer.style.display = "none";
+                    rhMessagesContainer.style.display = "block";
+                    profMessagesContainer.style.display = "none";
+                    loadRHMessages();
+                    break;
+                case "Prof":
+                    rhMessagesContainer.style.display = "none";
+                    chatMessagesContainer.style.display = "none";
+                    profMessagesContainer.style.display = "block";
+                    loadProfMessages();
+                    break;
+                default:
+                    rhMessagesContainer.style.display = "none";
+                    chatMessagesContainer.style.display = "block";
+                    profMessagesContainer.style.display = "none";
+                    loadUsers();
+                    break;
             }
         });
     });
@@ -103,27 +108,41 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
         // Filtrer les utilisateurs par rôle
-        const students = users.filter(user => user.role === "employer");
+        const otherProfs = users.filter(user => user.role === "prof" && user.id !== getCurrentUserId());
+        const employers = users.filter(user => user.role === "employer");
         const admins = users.filter(user => user.role === "admin");
 
-        // Afficher les étudiants
-        students.forEach(user => {
-            const messageElement = createUserElement(user);
+        // Afficher les autres profs
+        otherProfs.forEach(user => {
+            const messageElement = createUserElement(user, "Professeur");
+            messageList.appendChild(messageElement);
+        });
+
+        // Afficher les employés
+        employers.forEach(user => {
+            const messageElement = createUserElement(user, "Employé");
             messageList.appendChild(messageElement);
         });
 
         // Afficher les admins
         admins.forEach(user => {
-            const messageElement = createUserElement(user);
+            const messageElement = createUserElement(user, "Administrateur");
             messageList.appendChild(messageElement);
         });
     }
 
+    // Fonction pour obtenir l'ID de l'utilisateur courant
+    function getCurrentUserId() {
+        // À implémenter selon votre système d'authentification
+        return localStorage.getItem("userId");
+    }
+
     // Fonction pour créer un élément utilisateur
-    function createUserElement(user) {
+    function createUserElement(user, role) {
         const div = document.createElement("div");
         div.className = "message supconvo";
         div.setAttribute("data-name", `${user.nom} ${user.prenom}`);
+        div.setAttribute("data-role", role);
         div.setAttribute("data-avatar", "../assets/images/profil-pic.png");
         div.setAttribute("data-id", user.id);
 
@@ -133,7 +152,7 @@ document.addEventListener("DOMContentLoaded", function () {
             </span>
             <div class="message-content">
                 <strong>${user.nom} ${user.prenom}</strong>
-                <span class="role">${user.role === "admin" ? "Administrateur" : "Étudiant"}</span>
+                <span class="role">${role}</span>
                 <p class="supp-msg">${user.departement}</p>
             </div>
         `;
@@ -163,43 +182,45 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-    // Charger les messages des étudiants
-    async function loadStudentMessages() {
+    // Charger les messages des profs
+    async function loadProfMessages() {
         try {
-            const response = await fetch("https://backend-m6sm.onrender.com/messages/?type=student", {
+            const response = await fetch("https://backend-m6sm.onrender.com/messages/?type=prof", {
                 headers: {
                     "Authorization": `Bearer ${token}`
                 }
             });
 
             if (!response.ok) {
-                throw new Error("Erreur lors du chargement des messages des étudiants");
+                throw new Error("Erreur lors du chargement des messages des profs");
             }
 
             const messages = await response.json();
-            displayStudentMessages(messages);
+            displayProfMessages(messages);
         } catch (error) {
             console.error("Erreur:", error);
-            showError("Impossible de charger les messages des étudiants");
+            showError("Impossible de charger les messages des profs");
         }
     }
 
     // Afficher les messages RH
     function displayRHMessages(messages) {
         const messageList = document.getElementById("rh-messages");
-        messageList.innerHTML = "";
+        if (!messageList) return;
 
+        messageList.innerHTML = "";
         messages.forEach(message => {
             const messageElement = createMessageElement(message);
             messageList.appendChild(messageElement);
         });
     }
 
-    // Afficher les messages des étudiants
-    function displayStudentMessages(messages) {
+    // Afficher les messages des profs
+    function displayProfMessages(messages) {
         const messageList = document.getElementById("prof-messages");
-        messageList.innerHTML = "";
+        if (!messageList) return;
 
+        messageList.innerHTML = "";
         messages.forEach(message => {
             const messageElement = createMessageElement(message);
             messageList.appendChild(messageElement);
@@ -213,6 +234,7 @@ document.addEventListener("DOMContentLoaded", function () {
         div.setAttribute("data-name", message.sender_name);
         div.setAttribute("data-avatar", message.sender_avatar || "../assets/images/profil-pic.png");
         div.setAttribute("data-id", message.sender_id);
+        div.setAttribute("data-message-id", message.id);
 
         div.innerHTML = `
             <span class="avatar">
@@ -264,30 +286,34 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Afficher les messages du chat
     function displayChatMessages(messages) {
-        messagesContainer.innerHTML = "";
+        if (!messagesContainer) return;
 
         messages.forEach(message => {
-            const messageDiv = document.createElement("div");
-            messageDiv.classList.add("message", message.sender_id === activeContactId ? "received" : "sent");
+            const existingMessage = messagesContainer.querySelector(`[data-message-id="${message.id}"]`);
+            if (!existingMessage) {
+                const messageDiv = document.createElement("div");
+                messageDiv.classList.add("message", message.sender_id === activeContactId ? "received" : "sent");
+                messageDiv.setAttribute("data-message-id", message.id);
 
-            let content = `<div class="message-content">
-                            <span class="timestamp">${formatDate(message.created_at)}</span>`;
+                let content = `<div class="message-content">
+                                <span class="timestamp">${formatDate(message.created_at)}</span>`;
 
-            if (message.content) {
-                content += `<p class="msg-chat">${message.content}</p>`;
-            }
-
-            if (message.file_path) {
-                if (message.file_type.startsWith("image/")) {
-                    content += `<img src="${message.file_path}" class="chat-image" alt="Image envoyée" />`;
-                } else {
-                    content += `<a href="${message.file_path}" download class="chat-file">Télécharger le fichier</a>`;
+                if (message.content) {
+                    content += `<p class="msg-chat">${message.content}</p>`;
                 }
-            }
 
-            content += `</div>`;
-            messageDiv.innerHTML = content;
-            messagesContainer.appendChild(messageDiv);
+                if (message.file_path) {
+                    if (message.file_type.startsWith("image/")) {
+                        content += `<img src="${message.file_path}" class="chat-image" alt="Image envoyée" />`;
+                    } else {
+                        content += `<a href="${message.file_path}" download class="chat-file">Télécharger le fichier</a>`;
+                    }
+                }
+
+                content += `</div>`;
+                messageDiv.innerHTML = content;
+                messagesContainer.appendChild(messageDiv);
+            }
         });
 
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
@@ -300,6 +326,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const formData = new FormData();
         formData.append("content", messageInput.value);
         formData.append("receiver_id", activeContactId);
+        formData.append("type", currentMessageType);
 
         if (fileInput.files[0]) {
             formData.append("file", fileInput.files[0]);
@@ -324,6 +351,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
             const messageDiv = document.createElement("div");
             messageDiv.classList.add("message", "sent");
+            messageDiv.setAttribute("data-message-id", newMessage.id);
             messageDiv.innerHTML = `
                 <div class="message-content">
                     <span class="timestamp">${formatDate(newMessage.created_at)}</span>
@@ -363,8 +391,15 @@ document.addEventListener("DOMContentLoaded", function () {
 
         messages.forEach(message => {
             let name = message.getAttribute("data-name").toLowerCase();
-            let content = message.querySelector(".supp-msg").textContent.toLowerCase();
-            message.style.display = (name.includes(filter) || content.includes(filter)) ? "flex" : "none";
+            let role = message.getAttribute("data-role")?.toLowerCase() || "";
+            let content = message.querySelector(".supp-msg")?.textContent.toLowerCase() || "";
+            
+            message.style.display = 
+                name.includes(filter) || 
+                role.includes(filter) || 
+                content.includes(filter) 
+                    ? "flex" 
+                    : "none";
         });
     });
 
