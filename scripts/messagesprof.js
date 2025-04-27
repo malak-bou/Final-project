@@ -108,19 +108,19 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
         // Filtrer les utilisateurs par rôle
-        const otherEmployers = users.filter(user => user.role === "employer" && user.id !== getCurrentUserId());
-        const profs = users.filter(user => user.role === "prof");
+        const otherProfs = users.filter(user => user.role === "prof" && user.id !== getCurrentUserId());
+        const employers = users.filter(user => user.role === "employer");
         const admins = users.filter(user => user.role === "admin");
 
-        // Afficher les autres employés
-        otherEmployers.forEach(user => {
-            const messageElement = createUserElement(user, "Employé");
+        // Afficher les autres profs
+        otherProfs.forEach(user => {
+            const messageElement = createUserElement(user, "Professeur");
             messageList.appendChild(messageElement);
         });
 
-        // Afficher les profs
-        profs.forEach(user => {
-            const messageElement = createUserElement(user, "Professeur");
+        // Afficher les employés
+        employers.forEach(user => {
+            const messageElement = createUserElement(user, "Employé");
             messageList.appendChild(messageElement);
         });
 
@@ -133,6 +133,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Fonction pour obtenir l'ID de l'utilisateur courant
     function getCurrentUserId() {
+        // À implémenter selon votre système d'authentification
         return localStorage.getItem("userId");
     }
 
