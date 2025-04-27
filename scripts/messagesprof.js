@@ -1,27 +1,10 @@
-
 document.addEventListener("DOMContentLoaded", function () {
-    // Sélection des éléments
-    const sidebar = document.getElementById("sidebar");
-    const toggleBtn = document.querySelector(".toggle-btn");
-
-    // Gestion de la Sidebar
-    if (toggleBtn && sidebar) {
-        toggleBtn.addEventListener("click", function () {
-            sidebar.classList.toggle("active");
-        });
+    const token = localStorage.getItem("token");
+    if (!token) {
+        window.location.href = "../index.html";
+        return;
     }
 
-    // Fermer la sidebar en cliquant en dehors
-    document.addEventListener("click", function (event) {
-        if (!sidebar.contains(event.target) && !toggleBtn.contains(event.target)) {
-            sidebar.classList.remove("active");
-        }
-    });
-
-   
-   
-});
-document.addEventListener("DOMContentLoaded", function () {
     // Gestion de la Sidebar
     const sidebar = document.getElementById("sidebar");
     const openBtn = document.getElementById("toggleSidebar");
@@ -42,69 +25,8 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         });
     }
-   
-});
-document.getElementById("toggleSidebar").addEventListener("click", function () {
-    document.getElementById("sidebar").classList.toggle("hidden");
-});
 
-document.getElementById("closeSidebar").addEventListener("click", function () {
-    document.getElementById("sidebar").classList.add("hidden");
-});
-document.addEventListener("DOMContentLoaded", function () {
-    let links = document.querySelectorAll(".sidebar-menu li a");
-    links.forEach(link => {
-        if (link.href === window.location.href) {
-            link.classList.add("active");
-        }
-    });
-});
-document.getElementById('toggleSidebar').addEventListener('click', function() {
-    const sidebar = document.querySelector('.sidebar');
-    sidebar.classList.toggle('open');
-});
-function toggleSidebar() {
-    var sidebar = document.getElementById("sidebar");
-    sidebar.classList.toggle("open");
-}
-document.addEventListener("DOMContentLoaded", function () {
-    // Sélection des éléments
-    const sidebar = document.getElementById("sidebar");
-    const toggleBtn = document.getElementById("toggleSidebar");
-    const closeBtn = document.getElementById("closeSidebar");
-
-    // **🔹 FERME LA SIDEBAR AU CHARGEMENT 🔹**
-    sidebar.classList.remove("open"); // Assure que la sidebar est fermée par défaut
-
-   
-});
-
- // Fonction pour gérer l'affichage des messages de chat et RH
-const typeButtons = document.querySelectorAll("input[name='type']");
-const chatMessagesContainer = document.getElementById("chat-message"); // Correction ici
-const rhMessagesContainer = document.getElementById("rh-messages");
-const profMessagesContainer = document.getElementById("prof-messages");
-typeButtons.forEach(button => {
-    button.addEventListener("change", function () {
-        if (this.value === "RH") {
-            chatMessagesContainer.style.display = "none";
-            rhMessagesContainer.style.display = "block";
-            profMessagesContainer.style.display = "none";
-        } else {    if(this.value === "Chat") {
-                    rhMessagesContainer.style.display = "none";
-                    chatMessagesContainer.style.display = "block";
-                    profMessagesContainer.style.display = "none";
-                    } else {
-                                  rhMessagesContainer.style.display = "none";
-                                  chatMessagesContainer.style.display = "none";
-                                  profMessagesContainer.style.display = "block";
-                             };
-                }
-});
-});
-
-
-document.addEventListener("DOMContentLoaded", function () {
+    // Gestion des messages
     const messagesContainer = document.querySelector(".chat-box");
     const chatHeader = document.querySelector(".chat-header .username");
     const chatAvatar = document.querySelector(".chat-header .avatar img");
@@ -112,93 +34,241 @@ document.addEventListener("DOMContentLoaded", function () {
     const messageInput = document.getElementById("messageInput");
     const sendButton = document.getElementById("sendButton");
     const fileInput = document.getElementById("file");
+    const typeButtons = document.querySelectorAll("input[name='type']");
+    const chatMessagesContainer = document.getElementById("chat-message");
+    const rhMessagesContainer = document.getElementById("rh-messages");
+    const profMessagesContainer = document.getElementById("prof-messages");
+    const chatContainer = document.querySelector(".chat-container");
+    const container1 = document.querySelector(".container1");
+    const backButton = document.querySelector(".chat-header .material-symbols-outlined");
 
-    let activeContact = "Nesrine Fettal";
-    let chatData = JSON.parse(localStorage.getItem("chatMessages")) || {};
+    let activeContact = null;
+    let activeContactId = null;
 
-    function loadMessages() {
-        messagesContainer.innerHTML = "";
-        if (chatData[activeContact]) {
-            chatData[activeContact].forEach(msg => {
-                const messageDiv = document.createElement("div");
-                messageDiv.classList.add("message", msg.sender === "me" ? "sent" : "received");
+    // Charger les messages au démarrage
+    loadMessages();
 
-                let content = `<div class="message-content">
-                                <span class="timestamp">${msg.time}</span>`;
-
-                if (msg.text) {
-                    content += `<p class="msg-chat">${msg.text}</p>`;
-                }
-
-                if (msg.file) {
-                    if (msg.fileType.startsWith("image/")) {
-                        content += `<img src="${msg.file}" class="chat-image" alt="Image envoyée" />`;
-                    } else {
-                        content += `<a href="${msg.file}" download class="chat-file">Télécharger le fichier</a>`;
-                    }
-                }
-
-                content += `</div>`;
-                messageDiv.innerHTML = content;
-                messagesContainer.appendChild(messageDiv);
-            });
-        }
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    }
-
-    function sendMessage() {
-        const messageText = messageInput.value.trim();
-        if (messageText === "") return;
-
-        const messageData = {
-            text: messageText,
-            sender: "me",
-            time: new Date().toLocaleTimeString()
-        };
-
-        if (!chatData[activeContact]) {
-            chatData[activeContact] = [];
-        }
-        chatData[activeContact].push(messageData);
-        localStorage.setItem("chatMessages", JSON.stringify(chatData));
-
-        messageInput.value = "";
-        loadMessages();
-    }
-
-    function sendFile(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.onload = function (e) {
-            const fileData = {
-                file: e.target.result,
-                fileType: file.type,
-                sender: "me",
-                time: new Date().toLocaleTimeString()
-            };
-
-            if (!chatData[activeContact]) {
-                chatData[activeContact] = [];
+    // Gestion des types de messages
+    typeButtons.forEach(button => {
+        button.addEventListener("change", function () {
+            if (this.value === "RH") {
+                chatMessagesContainer.style.display = "none";
+                rhMessagesContainer.style.display = "block";
+                profMessagesContainer.style.display = "none";
+                loadRHMessages();
+            } else if (this.value === "Prof") {
+                rhMessagesContainer.style.display = "none";
+                chatMessagesContainer.style.display = "none";
+                profMessagesContainer.style.display = "block";
+                loadUserMessages();
+            } else {
+                rhMessagesContainer.style.display = "none";
+                chatMessagesContainer.style.display = "block";
+                profMessagesContainer.style.display = "none";
+                loadMessages();
             }
-            chatData[activeContact].push(fileData);
-            localStorage.setItem("chatMessages", JSON.stringify(chatData));
-
-            loadMessages();
-        };
-        reader.readAsDataURL(file);
-    }
-
-    recentMessages.forEach(msg => {
-        msg.addEventListener("click", function () {
-            activeContact = this.dataset.name;
-            chatHeader.innerText = activeContact;
-            chatAvatar.src = this.dataset.avatar;
-            loadMessages();
         });
     });
 
+    // Charger les messages
+    async function loadMessages() {
+        try {
+            const response = await fetch("https://backend-m6sm.onrender.com/messages/", {
+                headers: {
+                    "Authorization": `Bearer ${token}`
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error("Erreur lors du chargement des messages");
+            }
+
+            const messages = await response.json();
+            displayMessages(messages);
+        } catch (error) {
+            console.error("Erreur:", error);
+            showError("Impossible de charger les messages");
+        }
+    }
+
+    // Afficher les messages
+    function displayMessages(messages) {
+        const messageList = document.querySelector(".messages.chat");
+        messageList.innerHTML = "";
+
+        messages.forEach(message => {
+            const messageElement = createMessageElement(message);
+            messageList.appendChild(messageElement);
+        });
+    }
+
+    // Créer un élément de message
+    function createMessageElement(message) {
+        const div = document.createElement("div");
+        div.className = "message supconvo";
+        div.setAttribute("data-name", message.sender_name);
+        div.setAttribute("data-avatar", message.sender_avatar || "../assets/images/profil-pic.png");
+        div.setAttribute("data-id", message.sender_id);
+
+        div.innerHTML = `
+            <span class="avatar">
+                <img src="${message.sender_avatar || "../assets/images/profil-pic.png"}" alt="profil-pic">
+            </span>
+            <div class="message-content">
+                <strong>${message.sender_name}</strong>
+                <span class="timestamp">${formatDate(message.created_at)}</span>
+                <p class="supp-msg">${message.content}</p>
+            </div>
+        `;
+
+        div.addEventListener("click", () => openChat(message.sender_id, message.sender_name, message.sender_avatar));
+        return div;
+    }
+
+    // Ouvrir une conversation
+    async function openChat(userId, userName, userAvatar) {
+        activeContact = userName;
+        activeContactId = userId;
+
+        chatHeader.innerText = userName;
+        chatAvatar.src = userAvatar || "../assets/images/profil-pic.png";
+
+        try {
+            const response = await fetch(`https://backend-m6sm.onrender.com/messages/?receiver_id=${userId}`, {
+                headers: {
+                    "Authorization": `Bearer ${token}`
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error("Erreur lors du chargement de la conversation");
+            }
+
+            const messages = await response.json();
+            displayChatMessages(messages);
+
+            if (window.innerWidth < 768) {
+                container1.classList.add("hidden");
+                chatContainer.classList.add("active");
+                backButton.style.display = "block";
+            }
+        } catch (error) {
+            console.error("Erreur:", error);
+            showError("Impossible de charger la conversation");
+        }
+    }
+
+    // Afficher les messages du chat
+    function displayChatMessages(messages) {
+        messagesContainer.innerHTML = "";
+
+        messages.forEach(message => {
+            const messageDiv = document.createElement("div");
+            messageDiv.classList.add("message", message.sender_id === activeContactId ? "received" : "sent");
+
+            let content = `<div class="message-content">
+                            <span class="timestamp">${formatDate(message.created_at)}</span>`;
+
+            if (message.content) {
+                content += `<p class="msg-chat">${message.content}</p>`;
+            }
+
+            if (message.file_path) {
+                if (message.file_type.startsWith("image/")) {
+                    content += `<img src="${message.file_path}" class="chat-image" alt="Image envoyée" />`;
+                } else {
+                    content += `<a href="${message.file_path}" download class="chat-file">Télécharger le fichier</a>`;
+                }
+            }
+
+            content += `</div>`;
+            messageDiv.innerHTML = content;
+            messagesContainer.appendChild(messageDiv);
+        });
+
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
+    // Envoyer un message
+    async function sendMessage() {
+        if (!activeContactId || !messageInput.value.trim()) return;
+
+        const formData = new FormData();
+        formData.append("content", messageInput.value);
+        formData.append("receiver_id", activeContactId);
+
+        if (fileInput.files[0]) {
+            formData.append("file", fileInput.files[0]);
+        }
+
+        try {
+            const response = await fetch("https://backend-m6sm.onrender.com/messages/", {
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${token}`
+                },
+                body: formData
+            });
+
+            if (!response.ok) {
+                throw new Error("Erreur lors de l'envoi du message");
+            }
+
+            const newMessage = await response.json();
+            messageInput.value = "";
+            fileInput.value = "";
+
+            const messageDiv = document.createElement("div");
+            messageDiv.classList.add("message", "sent");
+            messageDiv.innerHTML = `
+                <div class="message-content">
+                    <span class="timestamp">${formatDate(newMessage.created_at)}</span>
+                    <p class="msg-chat">${newMessage.content}</p>
+                    ${newMessage.file_path ? 
+                        (newMessage.file_type.startsWith("image/") ? 
+                            `<img src="${newMessage.file_path}" class="chat-image" alt="Image envoyée" />` :
+                            `<a href="${newMessage.file_path}" download class="chat-file">Télécharger le fichier</a>`) 
+                        : ""}
+                </div>
+            `;
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+        } catch (error) {
+            console.error("Erreur:", error);
+            showError("Impossible d'envoyer le message");
+        }
+    }
+
+    // Gestion de la recherche
+    const searchIcon = document.getElementById("searchIcon");
+    const searchInput = document.getElementById("searchInput");
+    const hide = document.getElementById("hide-msg");
+
+    searchIcon.addEventListener("click", function () {
+        if (searchInput.style.display === "none" || searchInput.style.display === "") {
+            searchInput.style.display = "block";
+            hide.style.display = "none";
+            searchInput.focus();
+        } else {
+            searchInput.style.display = "none";
+            hide.style.display = "block";
+            searchInput.value = "";
+        }
+    });
+
+    searchInput.addEventListener("keyup", function() {
+        let filter = searchInput.value.toLowerCase();
+        const messages = document.querySelectorAll(".message.supconvo");
+
+        messages.forEach(message => {
+            let name = message.getAttribute("data-name").toLowerCase();
+            let content = message.querySelector(".supp-msg").textContent.toLowerCase();
+            message.style.display = (name.includes(filter) || content.includes(filter)) ? "flex" : "none";
+        });
+    });
+
+    // Événements
     sendButton.addEventListener("click", sendMessage);
     
     messageInput.addEventListener("keydown", function (event) {
@@ -208,66 +278,32 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     });
 
-    fileInput.addEventListener("change", sendFile);
-
-    loadMessages();
-});
-
-    
-const searchIcon = document.getElementById("searchIcon");
-const searchInput = document.getElementById("searchInput");
-const hide = document.getElementById("hide-msg");
-
-// Quand on clique sur la loupe, alterner l'affichage du champ de recherche
-searchIcon.addEventListener("click", function () {
-    if (searchInput.style.display === "none" || searchInput.style.display === "") {
-        searchInput.style.display = "block";
-        hide.style.display = "none"; // Masquer "Recent Messages"
-        searchInput.focus(); // Mettre le focus dans l'input
-    } else {
-        searchInput.style.display = "none";
-        hide.style.display = "block"; // Réafficher "Recent Messages"
-        searchInput.value = ""; // Optionnel : Effacer le texte dans l'input
-    }
-});
-
-const messages = document.querySelectorAll(".message.supconvo");
-
-searchInput.addEventListener("keyup", function() {
-    let filter = searchInput.value.toLowerCase();
-
-    messages.forEach(message => {
-        let name = message.getAttribute("data-name").toLowerCase();
-        message.style.display = name.includes(filter) ? "flex" : "none";
-    });
-});
-
-
-
-document.addEventListener("DOMContentLoaded", function () {
-    const messages = document.querySelectorAll(".message"); 
-    const chatContainer = document.querySelector(".chat-container"); 
-    const container1 = document.querySelector(".container1"); 
-    const backButton = document.querySelector(".chat-header .material-symbols-outlined"); 
-
-    // Cache le bouton retour au début
-    backButton.style.display = "none"; 
-
-    messages.forEach(message => {
-        message.addEventListener("click", function () {
-            if (window.innerWidth < 768) {
-                container1.classList.add("hidden"); 
-                chatContainer.classList.add("active"); 
-                backButton.style.display = "block";  // Afficher le bouton retour
-            }
-        });
-    });
-
-    // Fonction goback maintenant globale
+    // Fonction goback globale
     window.goback = function () {
         container1.classList.remove("hidden");
         chatContainer.classList.remove("active");
-        backButton.style.display = "none"; 
+        backButton.style.display = "none";
     };
-   
+
+    // Fonctions utilitaires
+    function formatDate(dateString) {
+        const date = new Date(dateString);
+        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function showError(message) {
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'notification error';
+        errorDiv.textContent = message;
+        document.body.appendChild(errorDiv);
+        setTimeout(() => errorDiv.remove(), 3000);
+    }
+
+    function showSuccess(message) {
+        const successDiv = document.createElement('div');
+        successDiv.className = 'notification success';
+        successDiv.textContent = message;
+        document.body.appendChild(successDiv);
+        setTimeout(() => successDiv.remove(), 3000);
+    }
 });
