@@ -6,27 +6,23 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     // Gestion de la Sidebar
+    const menuIcon = document.querySelector(".menu-icon");
     const sidebar = document.getElementById("sidebar");
-    const openBtn = document.getElementById("toggleSidebar");
     const closeBtn = document.getElementById("closeSidebar");
 
-    if (openBtn && closeBtn && sidebar) {
-        openBtn.addEventListener("click", function () {
-            sidebar.classList.add("active");
-        });
-
-        closeBtn.addEventListener("click", function () {
-            sidebar.classList.remove("active");
-        });
-
-        document.addEventListener("click", function (event) {
-            if (!sidebar.contains(event.target) && !openBtn.contains(event.target)) {
-                sidebar.classList.remove("active");
-            }
+    if (menuIcon && sidebar) {
+        menuIcon.addEventListener("click", function() {
+            sidebar.classList.toggle("active");
         });
     }
 
-    // Gestion des messages
+    if (closeBtn && sidebar) {
+        closeBtn.addEventListener("click", function() {
+            sidebar.classList.remove("active");
+        });
+    }
+
+    // Éléments DOM
     const messagesContainer = document.querySelector(".chat-box");
     const chatHeader = document.querySelector(".chat-header .username");
     const chatAvatar = document.querySelector(".chat-header .avatar img");
@@ -34,6 +30,9 @@ document.addEventListener("DOMContentLoaded", function () {
     const messageInput = document.getElementById("messageInput");
     const sendButton = document.getElementById("sendButton");
     const fileInput = document.getElementById("file");
+    const searchIcon = document.getElementById("searchIcon");
+    const searchInput = document.getElementById("searchInput");
+    const hide = document.getElementById("hide-msg");
     const typeButtons = document.querySelectorAll("input[name='type']");
     const chatMessagesContainer = document.getElementById("chat-message");
     const rhMessagesContainer = document.getElementById("rh-messages");
@@ -45,10 +44,10 @@ document.addEventListener("DOMContentLoaded", function () {
     let activeContact = null;
     let activeContactId = null;
 
-    // Charger les messages au démarrage
-    loadMessages();
+    // Charger les utilisateurs au démarrage
+    loadUsers();
 
-    // Gestion des types de messages
+    // Gestion des types de messages (RH, User, Chat)
     typeButtons.forEach(button => {
         button.addEventListener("change", function () {
             if (this.value === "RH") {
@@ -60,40 +59,145 @@ document.addEventListener("DOMContentLoaded", function () {
                 rhMessagesContainer.style.display = "none";
                 chatMessagesContainer.style.display = "none";
                 profMessagesContainer.style.display = "block";
-                loadUserMessages();
+                loadStudentMessages();
             } else {
                 rhMessagesContainer.style.display = "none";
                 chatMessagesContainer.style.display = "block";
                 profMessagesContainer.style.display = "none";
-                loadMessages();
+                loadUsers();
             }
         });
     });
 
-    // Charger les messages
-    async function loadMessages() {
+    // Fonction pour charger la liste des utilisateurs
+    async function loadUsers() {
         try {
-            const response = await fetch("https://backend-m6sm.onrender.com/messages/", {
+            const response = await fetch("https://backend-m6sm.onrender.com/public/users", {
                 headers: {
                     "Authorization": `Bearer ${token}`
                 }
             });
 
             if (!response.ok) {
-                throw new Error("Erreur lors du chargement des messages");
+                throw new Error("Erreur lors du chargement des utilisateurs");
             }
 
-            const messages = await response.json();
-            displayMessages(messages);
+            const users = await response.json();
+            displayUsers(users);
         } catch (error) {
             console.error("Erreur:", error);
-            showError("Impossible de charger les messages");
+            showError("Impossible de charger la liste des utilisateurs");
         }
     }
 
-    // Afficher les messages
-    function displayMessages(messages) {
+    // Fonction pour afficher les utilisateurs
+    function displayUsers(users) {
         const messageList = document.querySelector(".messages.chat");
+        if (!messageList) return;
+
+        messageList.innerHTML = "";
+
+        if (!users || users.length === 0) {
+            messageList.innerHTML = "<p>Aucun utilisateur trouvé</p>";
+            return;
+        }
+
+        // Filtrer les utilisateurs par rôle
+        const students = users.filter(user => user.role === "employer");
+        const admins = users.filter(user => user.role === "admin");
+
+        // Afficher les étudiants
+        students.forEach(user => {
+            const messageElement = createUserElement(user);
+            messageList.appendChild(messageElement);
+        });
+
+        // Afficher les admins
+        admins.forEach(user => {
+            const messageElement = createUserElement(user);
+            messageList.appendChild(messageElement);
+        });
+    }
+
+    // Fonction pour créer un élément utilisateur
+    function createUserElement(user) {
+        const div = document.createElement("div");
+        div.className = "message supconvo";
+        div.setAttribute("data-name", `${user.nom} ${user.prenom}`);
+        div.setAttribute("data-avatar", "../assets/images/profil-pic.png");
+        div.setAttribute("data-id", user.id);
+
+        div.innerHTML = `
+            <span class="avatar">
+                <img src="../assets/images/profil-pic.png" alt="profil-pic">
+            </span>
+            <div class="message-content">
+                <strong>${user.nom} ${user.prenom}</strong>
+                <span class="role">${user.role === "admin" ? "Administrateur" : "Étudiant"}</span>
+                <p class="supp-msg">${user.departement}</p>
+            </div>
+        `;
+
+        div.addEventListener("click", () => openChat(user.id, `${user.nom} ${user.prenom}`, "../assets/images/profil-pic.png"));
+        return div;
+    }
+
+    // Charger les messages RH
+    async function loadRHMessages() {
+        try {
+            const response = await fetch("https://backend-m6sm.onrender.com/messages/?type=rh", {
+                headers: {
+                    "Authorization": `Bearer ${token}`
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error("Erreur lors du chargement des messages RH");
+            }
+
+            const messages = await response.json();
+            displayRHMessages(messages);
+        } catch (error) {
+            console.error("Erreur:", error);
+            showError("Impossible de charger les messages RH");
+        }
+    }
+
+    // Charger les messages des étudiants
+    async function loadStudentMessages() {
+        try {
+            const response = await fetch("https://backend-m6sm.onrender.com/messages/?type=student", {
+                headers: {
+                    "Authorization": `Bearer ${token}`
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error("Erreur lors du chargement des messages des étudiants");
+            }
+
+            const messages = await response.json();
+            displayStudentMessages(messages);
+        } catch (error) {
+            console.error("Erreur:", error);
+            showError("Impossible de charger les messages des étudiants");
+        }
+    }
+
+    // Afficher les messages RH
+    function displayRHMessages(messages) {
+        const messageList = document.getElementById("rh-messages");
+        messageList.innerHTML = "";
+
+        messages.forEach(message => {
+            const messageElement = createMessageElement(message);
+            messageList.appendChild(messageElement);
+        });
+    }
+
+    // Afficher les messages des étudiants
+    function displayStudentMessages(messages) {
+        const messageList = document.getElementById("prof-messages");
         messageList.innerHTML = "";
 
         messages.forEach(message => {
@@ -241,10 +345,6 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     // Gestion de la recherche
-    const searchIcon = document.getElementById("searchIcon");
-    const searchInput = document.getElementById("searchInput");
-    const hide = document.getElementById("hide-msg");
-
     searchIcon.addEventListener("click", function () {
         if (searchInput.style.display === "none" || searchInput.style.display === "") {
             searchInput.style.display = "block";
