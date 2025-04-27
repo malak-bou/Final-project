@@ -12,7 +12,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const form = document.querySelector("form");
     form.addEventListener("submit", async function (event) {
-        event.preventDefault(); // Annuler l'envoi par défaut
+        event.preventDefault(); // Empêche l'envoi par défaut
 
         const email = emailInput.value.trim();
         const password = passwordInput.value.trim();
@@ -23,8 +23,8 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
         try {
-            // Étape 1: Envoyer login
-            const response = await fetch("http://127.0.0.1:8000/token", {
+            // 1. Connexion - envoyer email et password à backend
+            const response = await fetch("https://backend-m6sm.onrender.com/token", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/x-www-form-urlencoded"
@@ -38,11 +38,11 @@ document.addEventListener("DOMContentLoaded", function () {
             const data = await response.json();
 
             if (response.ok) {
-                // Stocker token
+                // Stocker le token
                 localStorage.setItem("token", data.access_token);
 
-                // Étape 2: Récupérer infos user
-                const userResponse = await fetch("http://127.0.0.1:8000/users/me", {
+                // 2. Récupérer les informations de l'utilisateur
+                const userResponse = await fetch("https://backend-m6sm.onrender.com/users/me", {
                     method: "GET",
                     headers: {
                         "Authorization": "Bearer " + data.access_token
@@ -52,9 +52,9 @@ document.addEventListener("DOMContentLoaded", function () {
                 const userData = await userResponse.json();
 
                 if (userResponse.ok) {
-                    const role = userData.profile.fonction; // C'est ici le role
+                    const role = userData.profile.fonction; // Récupérer le rôle
 
-                    // Redirection selon le rôle
+                    // Redirection en fonction du rôle
                     if (role === "admin") {
                         window.location.href = "../pages/admin/admin-dashboard.html";
                     } else if (role === "prof") {
@@ -68,7 +68,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     alert("Erreur lors de la récupération des informations utilisateur.");
                 }
             } else {
-                alert("Erreur de connexion : " + data.detail);
+                alert("Erreur de connexion : " + (data.detail || "Vérifiez vos identifiants."));
             }
 
         } catch (err) {
@@ -77,7 +77,7 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     });
 
-    // Bouton "Créer un compte"
+    // Redirection vers création de compte
     const redirectButton = document.querySelector(".btn-submit1");
     if (redirectButton) {
         redirectButton.addEventListener("click", function () {
