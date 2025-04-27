@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", function () {
-    // Affichage du mot de passe
+    // Password toggle functionality
     const togglePassword = document.querySelector(".toggle-password");
     const passwordInput = document.getElementById("password");
     const emailInput = document.getElementById("email");
@@ -12,7 +12,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const form = document.querySelector("form");
     form.addEventListener("submit", async function (event) {
-        event.preventDefault(); // Empêche l'envoi par défaut
+        event.preventDefault();
 
         const email = emailInput.value.trim();
         const password = passwordInput.value.trim();
@@ -23,8 +23,8 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
         try {
-            // 1. Connexion - envoyer email et password à backend
-            const response = await fetch("https://backend-m6sm.onrender.com/token", {
+            // Login request
+            const response = await fetch("https://backend-m6sm.onrender.com//token", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/x-www-form-urlencoded"
@@ -38,37 +38,54 @@ document.addEventListener("DOMContentLoaded", function () {
             const data = await response.json();
 
             if (response.ok) {
-                // Stocker le token
+                // Store token
                 localStorage.setItem("token", data.access_token);
 
-                // 2. Récupérer les informations de l'utilisateur
-                const userResponse = await fetch("https://backend-m6sm.onrender.com/users/me", {
+                // Get user information
+                const userResponse = await fetch("https://backend-m6sm.onrender.com//users/me", {
                     method: "GET",
                     headers: {
-                        "Authorization": "Bearer " + data.access_token
+                        "Authorization": `Bearer ${data.access_token}`
                     }
                 });
 
                 const userData = await userResponse.json();
 
                 if (userResponse.ok) {
-                    const role = userData.profile.fonction; // Récupérer le rôle
+                    // Check if user is approved
+                    if (!userData.profile.is_approved) {
+                        alert("Votre compte n'est pas encore approuvé par l'administrateur.");
+                        return;
+                    }
 
-                    // Redirection en fonction du rôle
-                    if (role === "admin") {
-                        window.location.href = "../pages/admin/admin-dashboard.html";
-                    } else if (role === "prof") {
-                        window.location.href = "../pages/dashboardprof.html";
-                    } else if (role === "employer") {
-                        window.location.href = "../pages/user/user-dashboard.html";
-                    } else {
-                        alert("Rôle non reconnu !");
+                    const role = userData.profile.role; // Changed from fonction to role
+
+                    // Redirect based on role
+                    switch (role) {
+                        case "admin":
+                            window.location.href = "../pages/admin/admin-dashboard.html";
+                            break;
+                        case "prof":
+                            window.location.href = "../pages/dashboardprof.html";
+                            break;
+                        case "employer":
+                            window.location.href = "../pages/user/user-dashboard.html";
+                            break;
+                        default:
+                            alert("Rôle non reconnu !");
                     }
                 } else {
                     alert("Erreur lors de la récupération des informations utilisateur.");
                 }
             } else {
-                alert("Erreur de connexion : " + (data.detail || "Vérifiez vos identifiants."));
+                // Handle specific error messages
+                if (data.detail === "Incorrect email or password") {
+                    alert("Email ou mot de passe incorrect.");
+                } else if (data.detail === "Account not approved yet") {
+                    alert("Votre compte n'est pas encore approuvé par l'administrateur.");
+                } else {
+                    alert("Erreur de connexion : " + (data.detail || "Vérifiez vos identifiants."));
+                }
             }
 
         } catch (err) {
@@ -77,7 +94,7 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     });
 
-    // Redirection vers création de compte
+    // Redirect to sign up page
     const redirectButton = document.querySelector(".btn-submit1");
     if (redirectButton) {
         redirectButton.addEventListener("click", function () {
