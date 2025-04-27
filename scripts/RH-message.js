@@ -5,6 +5,23 @@ document.addEventListener("DOMContentLoaded", function () {
         return;
     }
 
+    // Gestion de la Sidebar
+    const menuIcon = document.querySelector(".menu-icon");
+    const sidebar = document.getElementById("sidebar");
+    const closeBtn = document.getElementById("closeSidebar");
+
+    if (menuIcon && sidebar) {
+        menuIcon.addEventListener("click", function() {
+            sidebar.classList.toggle("active");
+        });
+    }
+
+    if (closeBtn && sidebar) {
+        closeBtn.addEventListener("click", function() {
+            sidebar.classList.remove("active");
+        });
+    }
+
     // Éléments DOM
     const messagesContainer = document.querySelector(".chat-box");
     const chatHeader = document.querySelector(".chat-header .username");
@@ -27,13 +44,8 @@ document.addEventListener("DOMContentLoaded", function () {
     let activeContact = null;
     let activeContactId = null;
 
-    // Charger les messages au démarrage
-    loadMessages();
-
-    // Gestion de la sidebar
-    function toggleNav() {
-        document.getElementById("sidebar").classList.toggle("active");
-    }
+    // Charger les utilisateurs au démarrage
+    loadUsers();
 
     // Gestion des types de messages (Chat, RH, Prof)
     typeButtons.forEach(button => {
@@ -42,42 +54,159 @@ document.addEventListener("DOMContentLoaded", function () {
                 chatMessagesContainer.style.display = "none";
                 rhMessagesContainer.style.display = "block";
                 profMessagesContainer.style.display = "none";
+                loadRHMessages();
             } else if (this.value === "Chat") {
                 rhMessagesContainer.style.display = "none";
                 chatMessagesContainer.style.display = "block";
                 profMessagesContainer.style.display = "none";
+                loadUsers();
             } else {
                 rhMessagesContainer.style.display = "none";
                 chatMessagesContainer.style.display = "none";
                 profMessagesContainer.style.display = "block";
+                loadProfMessages();
             }
         });
     });
 
-    // Charger les messages depuis le backend
-    async function loadMessages() {
+    // Fonction pour charger la liste des utilisateurs
+    async function loadUsers() {
         try {
-            const response = await fetch("https://backend-m6sm.onrender.com/messages/", {
+            const response = await fetch("https://backend-m6sm.onrender.com/public/users", {
+                method: "GET",
+                headers: {
+                    "Authorization": `Bearer ${token}`,
+                    "Content-Type": "application/json"
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error("Erreur lors du chargement des utilisateurs");
+            }
+
+            const users = await response.json();
+            console.log("Users loaded:", users);
+            displayUsers(users);
+        } catch (error) {
+            console.error("Erreur:", error);
+            showError("Impossible de charger la liste des utilisateurs");
+        }
+    }
+
+    // Fonction pour afficher les utilisateurs
+    function displayUsers(users) {
+        const messageList = document.querySelector(".messages.chat");
+        if (!messageList) {
+            console.error("Container .messages.chat non trouvé");
+            return;
+        }
+
+        messageList.innerHTML = "";
+
+        if (!users || users.length === 0) {
+            messageList.innerHTML = "<p>Aucun utilisateur trouvé</p>";
+            return;
+        }
+
+        // Filtrer les utilisateurs par rôle
+        const profs = users.filter(user => user.role === "prof");
+        const employers = users.filter(user => user.role === "employer");
+
+        console.log("Profs:", profs);
+        console.log("Employers:", employers);
+
+        // Afficher les profs
+        profs.forEach(user => {
+            const messageElement = createUserElement(user);
+            messageList.appendChild(messageElement);
+        });
+
+        // Afficher les employés
+        employers.forEach(user => {
+            const messageElement = createUserElement(user);
+            messageList.appendChild(messageElement);
+        });
+    }
+
+    // Fonction pour créer un élément utilisateur
+    function createUserElement(user) {
+        const div = document.createElement("div");
+        div.className = "message supconvo";
+        div.setAttribute("data-name", `${user.nom} ${user.prenom}`);
+        div.setAttribute("data-avatar", "../assets/images/profil-pic.png");
+        div.setAttribute("data-id", user.id);
+
+        div.innerHTML = `
+            <span class="avatar">
+                <img src="../assets/images/profil-pic.png" alt="profil-pic">
+            </span>
+            <div class="message-content">
+                <strong>${user.nom} ${user.prenom}</strong>
+                <span class="role">${user.role === "prof" ? "Professeur" : "Employé"}</span>
+                <p class="supp-msg">${user.departement}</p>
+            </div>
+        `;
+
+        div.addEventListener("click", () => openChat(user.id, `${user.nom} ${user.prenom}`, "../assets/images/profil-pic.png"));
+        return div;
+    }
+
+    // Charger les messages RH
+    async function loadRHMessages() {
+        try {
+            const response = await fetch("https://backend-m6sm.onrender.com/messages/?type=rh", {
                 headers: {
                     "Authorization": `Bearer ${token}`
                 }
             });
 
             if (!response.ok) {
-                throw new Error("Erreur lors du chargement des messages");
+                throw new Error("Erreur lors du chargement des messages RH");
             }
 
             const messages = await response.json();
-            displayRecentMessages(messages);
+            displayRHMessages(messages);
         } catch (error) {
             console.error("Erreur:", error);
-            showError("Impossible de charger les messages");
+            showError("Impossible de charger les messages RH");
         }
     }
 
-    // Afficher les messages récents
-    function displayRecentMessages(messages) {
-        const messageList = document.querySelector(".messages.chat");
+    // Charger les messages des profs
+    async function loadProfMessages() {
+        try {
+            const response = await fetch("https://backend-m6sm.onrender.com/messages/?type=prof", {
+                headers: {
+                    "Authorization": `Bearer ${token}`
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error("Erreur lors du chargement des messages des profs");
+            }
+
+            const messages = await response.json();
+            displayProfMessages(messages);
+        } catch (error) {
+            console.error("Erreur:", error);
+            showError("Impossible de charger les messages des profs");
+        }
+    }
+
+    // Afficher les messages RH
+    function displayRHMessages(messages) {
+        const messageList = document.getElementById("rh-messages");
+        messageList.innerHTML = "";
+
+        messages.forEach(message => {
+            const messageElement = createMessageElement(message);
+            messageList.appendChild(messageElement);
+        });
+    }
+
+    // Afficher les messages des profs
+    function displayProfMessages(messages) {
+        const messageList = document.getElementById("prof-messages");
         messageList.innerHTML = "";
 
         messages.forEach(message => {
@@ -131,7 +260,6 @@ document.addEventListener("DOMContentLoaded", function () {
             const messages = await response.json();
             displayChatMessages(messages);
 
-            // Gestion responsive
             if (window.innerWidth < 768) {
                 container1.classList.add("hidden");
                 chatContainer.classList.add("active");
@@ -203,7 +331,6 @@ document.addEventListener("DOMContentLoaded", function () {
             messageInput.value = "";
             fileInput.value = "";
 
-            // Ajouter le nouveau message à la conversation
             const messageDiv = document.createElement("div");
             messageDiv.classList.add("message", "sent");
             messageDiv.innerHTML = `
@@ -288,76 +415,4 @@ document.addEventListener("DOMContentLoaded", function () {
         document.body.appendChild(successDiv);
         setTimeout(() => successDiv.remove(), 3000);
     }
-});
-
-// Fonction pour charger la liste des utilisateurs
-async function loadUsers() {
-    try {
-        const response = await fetch("https://backend-m6sm.onrender.com/public/users", {
-            headers: {
-                "Authorization": `Bearer ${token}`
-            }
-        });
-
-        if (!response.ok) {
-            throw new Error("Erreur lors du chargement des utilisateurs");
-        }
-
-        const users = await response.json();
-        displayUsers(users);
-    } catch (error) {
-        console.error("Erreur:", error);
-        showError("Impossible de charger la liste des utilisateurs");
-    }
-}
-
-// Fonction pour afficher les utilisateurs
-function displayUsers(users) {
-    const messageList = document.querySelector(".messages.chat");
-    messageList.innerHTML = "";
-
-    // Filtrer les utilisateurs par rôle
-    const profs = users.filter(user => user.role === "prof");
-    const employers = users.filter(user => user.role === "employer");
-
-    // Afficher les profs
-    profs.forEach(user => {
-        const messageElement = createUserElement(user);
-        messageList.appendChild(messageElement);
-    });
-
-    // Afficher les employés
-    employers.forEach(user => {
-        const messageElement = createUserElement(user);
-        messageList.appendChild(messageElement);
-    });
-}
-
-// Fonction pour créer un élément utilisateur
-function createUserElement(user) {
-    const div = document.createElement("div");
-    div.className = "message supconvo";
-    div.setAttribute("data-name", `${user.nom} ${user.prenom}`);
-    div.setAttribute("data-avatar", "../assets/images/profil-pic.png");
-    div.setAttribute("data-id", user.id);
-
-    div.innerHTML = `
-        <span class="avatar">
-            <img src="../assets/images/profil-pic.png" alt="profil-pic">
-        </span>
-        <div class="message-content">
-            <strong>${user.nom} ${user.prenom}</strong>
-            <span class="role">${user.role === "prof" ? "Professeur" : "Employé"}</span>
-            <p class="supp-msg">${user.departement}</p>
-        </div>
-    `;
-
-    div.addEventListener("click", () => openChat(user.id, `${user.nom} ${user.prenom}`, "../assets/images/profil-pic.png"));
-    return div;
-}
-
-// Appeler loadUsers au chargement de la page
-document.addEventListener("DOMContentLoaded", function() {
-    // ... votre code existant ...
-    loadUsers(); // Ajouter cette ligne
 });
