@@ -5,8 +5,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const form = document.querySelector("form");
     const submitButton = form.querySelector('button[type="submit"]');
     let loginAttempts = 0;
-    const MAX_LOGIN_ATTEMPTS = 3;
-    const LOCKOUT_TIME = 15 * 60 * 1000; // 15 minutes en millisecondes
+
 
     // Fonction pour valider l'email
     function isValidEmail(email) {
@@ -116,7 +115,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
                     // Redirection en fonction du rôle
                     const roleRoutes = {
-                        "admin": "../pages/admin/admin-dashboard.html",
+                        "admin": "../pages/admin-dashboard.html",
                         "prof": "../pages/dashboardprof.html",
                         "employer": "../pages/user/user-dashboard.html"
                     };
