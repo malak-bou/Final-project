@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", function () {
-    // Gestion de l'affichage du mot de passe
+    // Affichage du mot de passe
     const togglePassword = document.querySelector(".toggle-password");
     const passwordInput = document.getElementById("password");
     const emailInput = document.getElementById("email");
@@ -10,10 +10,9 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    // Validation du formulaire
     const form = document.querySelector("form");
-    form.addEventListener("submit", function (event) {
-        event.preventDefault(); // Empêche l'envoi par défaut
+    form.addEventListener("submit", async function (event) {
+        event.preventDefault(); // Annuler l'envoi par défaut
 
         const email = emailInput.value.trim();
         const password = passwordInput.value.trim();
@@ -23,68 +22,66 @@ document.addEventListener("DOMContentLoaded", function () {
             return;
         }
 
-        // Vérification des identifiants
-        const validEmail = "moumouhalem6@gmail.com";
-        const validPassword = "123456";
-        const validEmail1 = "sellamiamine@gmail.com";
-        const validPassword1 = "123456";
-        const validEmail2 = "Bazouzimohammed@gmail.com";
-        const validPassword2 = "123456";
+        try {
+            // Étape 1: Envoyer login
+            const response = await fetch("http://127.0.0.1:8000/token", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded"
+                },
+                body: new URLSearchParams({
+                    username: email,
+                    password: password
+                })
+            });
 
-        if (email === validEmail && password === validPassword) {
-            // Redirection vers le tableau de bord
-            window.location.href = "../pages/user/user-dashboard.html";
-        } else { if(email === validEmail1 && password === validPassword1){
-            window.location.href = "../pages/dashboardprof.html";
-            } else{if(email === validEmail2 && password === validPassword2){
-                window.location.href = "../pages/RH-dashboard.html";
-            }else {
-                alert("Email ou mot de passe incorrect.");
+            const data = await response.json();
+
+            if (response.ok) {
+                // Stocker token
+                localStorage.setItem("token", data.access_token);
+
+                // Étape 2: Récupérer infos user
+                const userResponse = await fetch("http://127.0.0.1:8000/users/me", {
+                    method: "GET",
+                    headers: {
+                        "Authorization": "Bearer " + data.access_token
+                    }
+                });
+
+                const userData = await userResponse.json();
+
+                if (userResponse.ok) {
+                    const role = userData.profile.fonction; // C'est ici le role
+
+                    // Redirection selon le rôle
+                    if (role === "admin") {
+                        window.location.href = "../pages/admin/admin-dashboard.html";
+                    } else if (role === "prof") {
+                        window.location.href = "../pages/dashboardprof.html";
+                    } else if (role === "employer") {
+                        window.location.href = "../pages/user/user-dashboard.html";
+                    } else {
+                        alert("Rôle non reconnu !");
+                    }
+                } else {
+                    alert("Erreur lors de la récupération des informations utilisateur.");
+                }
+            } else {
+                alert("Erreur de connexion : " + data.detail);
             }
-            }
+
+        } catch (err) {
+            console.error("Erreur de requête :", err);
+            alert("Impossible de contacter le serveur.");
         }
     });
 
-    // Redirection si on clique sur un bouton spécifique
+    // Bouton "Créer un compte"
     const redirectButton = document.querySelector(".btn-submit1");
     if (redirectButton) {
         redirectButton.addEventListener("click", function () {
             window.location.href = "../pages/Sign-in.html";
         });
     }
-});
-
-document.getElementById("login-form").addEventListener("submit", async function (e) {
-  e.preventDefault();
-
-  const credentials = {
-    email: document.getElementById("email").value,
-    password: document.getElementById("password").value
-  };
-
-  try {
-    const response = await fetch("http://127.0.0.1:8000/login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(credentials)
-    });
-
-    const data = await response.json();
-
-    if (response.ok) {
-      alert("Connexion réussie !");
-      // Stocker le token si nécessaire
-      localStorage.setItem("token", data.token);
-      // Redirection vers la page d'accueil ou tableau de bord
-      window.location.href = "dashboard.html";
-    } else {
-      alert("Erreur : " + data.detail);
-    }
-
-  } catch (err) {
-    console.error("Erreur de requête :", err);
-    alert("Impossible de contacter le serveur.");
-  }
 });
