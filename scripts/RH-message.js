@@ -289,3 +289,75 @@ document.addEventListener("DOMContentLoaded", function () {
         setTimeout(() => successDiv.remove(), 3000);
     }
 });
+
+// Fonction pour charger la liste des utilisateurs
+async function loadUsers() {
+    try {
+        const response = await fetch("https://backend-m6sm.onrender.com/public/users", {
+            headers: {
+                "Authorization": `Bearer ${token}`
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error("Erreur lors du chargement des utilisateurs");
+        }
+
+        const users = await response.json();
+        displayUsers(users);
+    } catch (error) {
+        console.error("Erreur:", error);
+        showError("Impossible de charger la liste des utilisateurs");
+    }
+}
+
+// Fonction pour afficher les utilisateurs
+function displayUsers(users) {
+    const messageList = document.querySelector(".messages.chat");
+    messageList.innerHTML = "";
+
+    // Filtrer les utilisateurs par rôle
+    const profs = users.filter(user => user.role === "prof");
+    const employers = users.filter(user => user.role === "employer");
+
+    // Afficher les profs
+    profs.forEach(user => {
+        const messageElement = createUserElement(user);
+        messageList.appendChild(messageElement);
+    });
+
+    // Afficher les employés
+    employers.forEach(user => {
+        const messageElement = createUserElement(user);
+        messageList.appendChild(messageElement);
+    });
+}
+
+// Fonction pour créer un élément utilisateur
+function createUserElement(user) {
+    const div = document.createElement("div");
+    div.className = "message supconvo";
+    div.setAttribute("data-name", `${user.nom} ${user.prenom}`);
+    div.setAttribute("data-avatar", "../assets/images/profil-pic.png");
+    div.setAttribute("data-id", user.id);
+
+    div.innerHTML = `
+        <span class="avatar">
+            <img src="../assets/images/profil-pic.png" alt="profil-pic">
+        </span>
+        <div class="message-content">
+            <strong>${user.nom} ${user.prenom}</strong>
+            <span class="role">${user.role === "prof" ? "Professeur" : "Employé"}</span>
+            <p class="supp-msg">${user.departement}</p>
+        </div>
+    `;
+
+    div.addEventListener("click", () => openChat(user.id, `${user.nom} ${user.prenom}`, "../assets/images/profil-pic.png"));
+    return div;
+}
+
+// Appeler loadUsers au chargement de la page
+document.addEventListener("DOMContentLoaded", function() {
+    // ... votre code existant ...
+    loadUsers(); // Ajouter cette ligne
+});
