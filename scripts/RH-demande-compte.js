@@ -7,8 +7,20 @@ if (!token) {
 // Gestion de la sidebar
 function toggleSidebar() {
     const sidebar = document.getElementById('sidebar');
-    sidebar.classList.toggle('active');
+    if (sidebar) {
+        sidebar.classList.toggle('active');
+    }
 }
+
+// Fermer la sidebar quand on clique en dehors
+document.addEventListener('click', (e) => {
+    const sidebar = document.getElementById('sidebar');
+    const menuIcon = document.querySelector('.menuicon');
+    
+    if (sidebar && !sidebar.contains(e.target) && !menuIcon.contains(e.target)) {
+        sidebar.classList.remove('active');
+    }
+});
 
 // Fonction pour charger les demandes en attente
 async function loadPendingRequests() {
@@ -47,7 +59,6 @@ async function loadPendingRequests() {
             requestsBody.appendChild(row);
         });
 
-        // Ajouter les écouteurs d'événements pour les boutons
         setupValidationButtons();
         setupDeleteButtons();
 
@@ -88,19 +99,81 @@ async function loadExistingAccounts() {
                 <td>${account.prenom || ''}</td>
                 <td>${account.departement || ''}</td>
                 <td>${account.role || ''}</td>
-                <td><button class="modify" data-id="${account._id}">Modifier</button></td>
+                <td><button class="modify" data-id="${account._id}" data-nom="${account.nom}" data-prenom="${account.prenom}" data-departement="${account.departement}" data-role="${account.role}">Modifier</button></td>
                 <td><button class="delete" data-id="${account._id}">Supprimer</button></td>
             `;
             accountsBody.appendChild(row);
         });
 
-        // Ajouter les écouteurs d'événements pour les boutons de suppression
+        setupModifyButtons();
         setupDeleteButtons();
 
     } catch (error) {
         console.error('Erreur:', error);
         showAlert('Erreur lors du chargement des comptes', 'error');
     }
+}
+
+// Configuration des boutons de modification
+function setupModifyButtons() {
+    const editPopup = document.getElementById('confirmEditPopup');
+    const confirmEditBtn = document.getElementById('confirmEditBtn');
+    let currentAccountId = null;
+    let currentAccountData = null;
+
+    document.querySelectorAll('.modify').forEach(button => {
+        button.addEventListener('click', (e) => {
+            currentAccountId = e.target.dataset.id;
+            currentAccountData = {
+                nom: e.target.dataset.nom,
+                prenom: e.target.dataset.prenom,
+                departement: e.target.dataset.departement,
+                role: e.target.dataset.role
+            };
+            
+            // Remplir le formulaire de modification
+            document.getElementById('editNom').value = currentAccountData.nom;
+            document.getElementById('editPrenom').value = currentAccountData.prenom;
+            document.getElementById('editDepartement').value = currentAccountData.departement;
+            document.getElementById('editRole').value = currentAccountData.role;
+            
+            editPopup.style.display = 'block';
+        });
+    });
+
+    confirmEditBtn.addEventListener('click', async () => {
+        if (currentAccountId) {
+            try {
+                const updatedData = {
+                    nom: document.getElementById('editNom').value,
+                    prenom: document.getElementById('editPrenom').value,
+                    departement: document.getElementById('editDepartement').value,
+                    role: document.getElementById('editRole').value
+                };
+
+                const response = await fetch(`https://backend-m6sm.onrender.com/admin/update-user/${currentAccountId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(updatedData)
+                });
+
+                if (!response.ok) {
+                    throw new Error('Erreur lors de la modification');
+                }
+
+                showAlert('Compte modifié avec succès', 'success');
+                loadExistingAccounts();
+                closeEditConfirmPopup();
+
+            } catch (error) {
+                console.error('Erreur:', error);
+                showAlert('Erreur lors de la modification', 'error');
+            }
+        }
+    });
 }
 
 // Configuration des boutons de validation
@@ -132,8 +205,8 @@ function setupValidationButtons() {
                 }
 
                 showAlert('Compte validé avec succès', 'success');
-                loadPendingRequests(); // Recharger les demandes
-                loadExistingAccounts(); // Recharger les comptes
+                loadPendingRequests();
+                loadExistingAccounts();
 
             } catch (error) {
                 console.error('Erreur:', error);
@@ -186,6 +259,11 @@ function setupDeleteButtons() {
         }
         deletePopup.style.display = 'none';
     });
+}
+
+// Fonction pour fermer le popup de modification
+function closeEditConfirmPopup() {
+    document.getElementById('confirmEditPopup').style.display = 'none';
 }
 
 // Fonction pour fermer le popup de suppression
@@ -253,6 +331,12 @@ style.textContent = `
             transform: translateX(0);
             opacity: 1;
         }
+    }
+    .sidebar.active {
+        transform: translateX(0);
+    }
+    .sidebar {
+        transition: transform 0.3s ease-in-out;
     }
 `;
 document.head.appendChild(style);
