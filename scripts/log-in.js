@@ -24,7 +24,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         try {
             // Login request
-            const response = await fetch("https://backend-m6sm.onrender.com//token", {
+            const response = await fetch("https://backend-m6sm.onrender.com/token", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/x-www-form-urlencoded"
@@ -42,7 +42,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 localStorage.setItem("token", data.access_token);
 
                 // Get user information
-                const userResponse = await fetch("https://backend-m6sm.onrender.com//users/me", {
+                const userResponse = await fetch("https://backend-m6sm.onrender.com/users/me", {
                     method: "GET",
                     headers: {
                         "Authorization": `Bearer ${data.access_token}`
