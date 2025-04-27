@@ -115,7 +115,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
                     // Redirection en fonction du rôle
                     const roleRoutes = {
-                        "admin": "../pages/admin-dashboard.html",
+                        "admin": "../pages/RH-dashboard.html",
                         "prof": "../pages/dashboardprof.html",
                         "employer": "../pages/user/user-dashboard.html"
                     };
