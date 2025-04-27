@@ -4,11 +4,14 @@ if (!token) {
     window.location.href = '../index.html';
 }
 
-// Gestion de la sidebar
+// Function to open/close the sidebar
 function toggleSidebar() {
-    const sidebar = document.getElementById('sidebar');
-    if (sidebar) {
-        sidebar.classList.toggle('active');
+    var sidebar = document.getElementById("sidebar");
+    // Check the current width of the sidebar and adjust it
+    if (sidebar.style.width === "250px") {
+        sidebar.style.width = "0"; // Close the sidebar
+    } else {
+        sidebar.style.width = "250px"; // Open the sidebar
     }
 }
 
@@ -18,7 +21,7 @@ document.addEventListener('click', (e) => {
     const menuIcon = document.querySelector('.menuicon');
     
     if (sidebar && !sidebar.contains(e.target) && !menuIcon.contains(e.target)) {
-        sidebar.classList.remove('active');
+        sidebar.style.width = "0";
     }
 });
 
@@ -114,6 +117,51 @@ async function loadExistingAccounts() {
     }
 }
 
+// Configuration des boutons de validation
+function setupValidationButtons() {
+    const modal = document.getElementById('confirmationModal');
+    const confirmBtn = document.getElementById('confirmBtn');
+    const cancelBtn = document.getElementById('cancelBtn');
+    let currentRequestId = null;
+
+    document.querySelectorAll('.create').forEach(button => {
+        button.addEventListener('click', (e) => {
+            currentRequestId = e.target.dataset.id;
+            modal.style.display = 'block';
+        });
+    });
+
+    confirmBtn.addEventListener('click', async () => {
+        if (currentRequestId) {
+            try {
+                const response = await fetch(`https://backend-m6sm.onrender.com/admin/approve-user/${currentRequestId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Erreur lors de la validation');
+                }
+
+                showAlert('Compte validé avec succès', 'success');
+                loadPendingRequests();
+                loadExistingAccounts();
+
+            } catch (error) {
+                console.error('Erreur:', error);
+                showAlert('Erreur lors de la validation', 'error');
+            }
+        }
+        modal.style.display = 'none';
+    });
+
+    cancelBtn.addEventListener('click', () => {
+        modal.style.display = 'none';
+    });
+}
+
 // Configuration des boutons de modification
 function setupModifyButtons() {
     const editPopup = document.getElementById('confirmEditPopup');
@@ -173,51 +221,6 @@ function setupModifyButtons() {
                 showAlert('Erreur lors de la modification', 'error');
             }
         }
-    });
-}
-
-// Configuration des boutons de validation
-function setupValidationButtons() {
-    const modal = document.getElementById('confirmationModal');
-    const confirmBtn = document.getElementById('confirmBtn');
-    const cancelBtn = document.getElementById('cancelBtn');
-    let currentRequestId = null;
-
-    document.querySelectorAll('.create').forEach(button => {
-        button.addEventListener('click', (e) => {
-            currentRequestId = e.target.dataset.id;
-            modal.style.display = 'block';
-        });
-    });
-
-    confirmBtn.addEventListener('click', async () => {
-        if (currentRequestId) {
-            try {
-                const response = await fetch(`https://backend-m6sm.onrender.com/admin/approve-user/${currentRequestId}`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-
-                if (!response.ok) {
-                    throw new Error('Erreur lors de la validation');
-                }
-
-                showAlert('Compte validé avec succès', 'success');
-                loadPendingRequests();
-                loadExistingAccounts();
-
-            } catch (error) {
-                console.error('Erreur:', error);
-                showAlert('Erreur lors de la validation', 'error');
-            }
-        }
-        modal.style.display = 'none';
-    });
-
-    cancelBtn.addEventListener('click', () => {
-        modal.style.display = 'none';
     });
 }
 
@@ -285,14 +288,20 @@ function showAlert(message, type) {
 
 // Fonction de recherche
 document.getElementById('search-bar').addEventListener('input', function(e) {
-    const searchText = e.target.value.toLowerCase();
+    const searchText = e.target.value.toLowerCase().trim();
     const tables = document.querySelectorAll('table');
 
     tables.forEach(table => {
         const rows = table.querySelectorAll('tbody tr');
         rows.forEach(row => {
-            const text = row.textContent.toLowerCase();
-            row.style.display = text.includes(searchText) ? '' : 'none';
+            const name = row.cells[0]?.textContent.toLowerCase();
+            const prenom = row.cells[1]?.textContent.toLowerCase();
+            
+            if (name.includes(searchText) || prenom.includes(searchText)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
         });
     });
 });
@@ -332,11 +341,8 @@ style.textContent = `
             opacity: 1;
         }
     }
-    .sidebar.active {
-        transform: translateX(0);
-    }
     .sidebar {
-        transition: transform 0.3s ease-in-out;
+        transition: width 0.3s ease-in-out;
     }
 `;
 document.head.appendChild(style);
