@@ -1,194 +1,258 @@
+// Vérification du token
+const token = localStorage.getItem('token');
+if (!token) {
+    window.location.href = '../index.html';
+}
+
 // Gestion de la sidebar
 function toggleSidebar() {
-    var sidebar = document.getElementById("sidebar");
-    if (sidebar.style.width === "250px") {
-        sidebar.style.width = "0";
-    } else {
-        sidebar.style.width = "250px";
+    const sidebar = document.getElementById('sidebar');
+    sidebar.classList.toggle('active');
+}
+
+// Fonction pour charger les demandes en attente
+async function loadPendingRequests() {
+    try {
+        const response = await fetch('https://backend-m6sm.onrender.com/admin/pending-users', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error('Erreur lors du chargement des demandes');
+        }
+
+        const requests = await response.json();
+        const requestsBody = document.getElementById('requests-body');
+        requestsBody.innerHTML = '';
+
+        if (requests.length === 0) {
+            const row = document.createElement('tr');
+            row.innerHTML = '<td colspan="6" style="text-align: center;">Aucune demande en attente</td>';
+            requestsBody.appendChild(row);
+            return;
+        }
+
+        requests.forEach(request => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${request.nom || ''}</td>
+                <td>${request.prenom || ''}</td>
+                <td>${request.departement || ''}</td>
+                <td>${request.role || ''}</td>
+                <td><button class="create" data-id="${request._id}">Valider</button></td>
+                <td><button class="delete" data-id="${request._id}">Supprimer</button></td>
+            `;
+            requestsBody.appendChild(row);
+        });
+
+        // Ajouter les écouteurs d'événements pour les boutons
+        setupValidationButtons();
+        setupDeleteButtons();
+
+    } catch (error) {
+        console.error('Erreur:', error);
+        showAlert('Erreur lors du chargement des demandes', 'error');
     }
 }
 
-// Gestion de la recherche
-document.getElementById("search-bar").addEventListener("input", filterTable);
+// Fonction pour charger les comptes existants
+async function loadExistingAccounts() {
+    try {
+        const response = await fetch('https://backend-m6sm.onrender.com/public/users', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
 
-function filterTable() {
-    const searchValue = document.getElementById("search-bar").value.toLowerCase().trim();
-    const requestsRows = document.querySelectorAll("#requests-body tr");
-    const accountsRows = document.querySelectorAll(".accounts tbody tr");
+        if (!response.ok) {
+            throw new Error('Erreur lors du chargement des comptes');
+        }
 
-    filterRows(requestsRows, searchValue);
-    filterRows(accountsRows, searchValue);
+        const accounts = await response.json();
+        const accountsBody = document.getElementById('accounts-body');
+        accountsBody.innerHTML = '';
+
+        if (accounts.length === 0) {
+            const row = document.createElement('tr');
+            row.innerHTML = '<td colspan="6" style="text-align: center;">Aucun compte existant</td>';
+            accountsBody.appendChild(row);
+            return;
+        }
+
+        accounts.forEach(account => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${account.nom || ''}</td>
+                <td>${account.prenom || ''}</td>
+                <td>${account.departement || ''}</td>
+                <td>${account.role || ''}</td>
+                <td><button class="modify" data-id="${account._id}">Modifier</button></td>
+                <td><button class="delete" data-id="${account._id}">Supprimer</button></td>
+            `;
+            accountsBody.appendChild(row);
+        });
+
+        // Ajouter les écouteurs d'événements pour les boutons de suppression
+        setupDeleteButtons();
+
+    } catch (error) {
+        console.error('Erreur:', error);
+        showAlert('Erreur lors du chargement des comptes', 'error');
+    }
 }
 
-function filterRows(rows, value) {
-    rows.forEach(row => {
-        const name = row.cells[0]?.textContent.toLowerCase();
-        const prenom = row.cells[1]?.textContent.toLowerCase();
-        const department = row.cells[2]?.textContent.toLowerCase();
+// Configuration des boutons de validation
+function setupValidationButtons() {
+    const modal = document.getElementById('confirmationModal');
+    const confirmBtn = document.getElementById('confirmBtn');
+    const cancelBtn = document.getElementById('cancelBtn');
+    let currentRequestId = null;
 
-        if (name.includes(value) || prenom.includes(value) || department.includes(value)) {
-            row.style.display = "";
-        } else {
-            row.style.display = "none";
+    document.querySelectorAll('.create').forEach(button => {
+        button.addEventListener('click', (e) => {
+            currentRequestId = e.target.dataset.id;
+            modal.style.display = 'block';
+        });
+    });
+
+    confirmBtn.addEventListener('click', async () => {
+        if (currentRequestId) {
+            try {
+                const response = await fetch(`https://backend-m6sm.onrender.com/admin/approve-user/${currentRequestId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Erreur lors de la validation');
+                }
+
+                showAlert('Compte validé avec succès', 'success');
+                loadPendingRequests(); // Recharger les demandes
+                loadExistingAccounts(); // Recharger les comptes
+
+            } catch (error) {
+                console.error('Erreur:', error);
+                showAlert('Erreur lors de la validation', 'error');
+            }
         }
+        modal.style.display = 'none';
+    });
+
+    cancelBtn.addEventListener('click', () => {
+        modal.style.display = 'none';
     });
 }
 
-// Gestion des demandes de compte
-document.addEventListener("DOMContentLoaded", function () {
-    const token = localStorage.getItem("token");
-    if (!token) {
-        window.location.href = "../index.html";
-        return;
-    }
+// Configuration des boutons de suppression
+function setupDeleteButtons() {
+    const deletePopup = document.getElementById('confirmDeletePopup');
+    const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+    let currentRequestId = null;
 
-    const requestsBody = document.getElementById("requests-body");
-    const accountsBody = document.getElementById("accounts-body");
-    const modal = document.getElementById("confirmationModal");
-    const confirmBtn = document.getElementById("confirmBtn");
-    const cancelBtn = document.getElementById("cancelBtn");
-
-    let selectedUserId = null;
-
-    // Charger les demandes en attente
-    async function loadPendingRequests() {
-        try {
-            const response = await fetch("https://backend-m6sm.onrender.com/admin/pending-users", {
-                headers: {
-                    "Authorization": `Bearer ${token}`
-                }
-            });
-
-            if (!response.ok) throw new Error("Erreur lors du chargement des demandes");
-
-            const users = await response.json();
-            displayPendingRequests(users);
-        } catch (error) {
-            console.error("Erreur:", error);
-            showError("Impossible de charger les demandes en attente");
-        }
-    }
-
-    // Afficher les demandes en attente
-    function displayPendingRequests(users) {
-        if (!requestsBody) return;
-
-        requestsBody.innerHTML = users.map(user => `
-            <tr data-user-id="${user.id}">
-                <td>${user.nom || ''}</td>
-                <td>${user.prenom || ''}</td>
-                <td>${user.departement || ''}</td>
-                <td>${user.role || ''}</td>
-                <td><button class="create" data-user-id="${user.id}">Accepter</button></td>
-                <td><button class="delete" data-user-id="${user.id}">Refuser</button></td>
-            </tr>
-        `).join("");
-
-        // Attacher les événements
-        attachPendingRequestEvents();
-    }
-
-    function attachPendingRequestEvents() {
-        // Gérer le clic sur Accepter
-        document.querySelectorAll(".create").forEach(button => {
-            button.addEventListener("click", function() {
-                selectedUserId = this.getAttribute("data-user-id");
-                modal.style.display = "block";
-            });
+    document.querySelectorAll('.delete').forEach(button => {
+        button.addEventListener('click', (e) => {
+            currentRequestId = e.target.dataset.id;
+            deletePopup.style.display = 'block';
         });
+    });
 
-        // Gérer le clic sur Refuser
-        document.querySelectorAll(".delete").forEach(button => {
-            button.addEventListener("click", async function() {
-                const userId = this.getAttribute("data-user-id");
-                if (confirm("Voulez-vous vraiment refuser cette demande ?")) {
-                    try {
-                        const response = await fetch(`https://backend-m6sm.onrender.com/admin/users/${userId}`, {
-                            method: "DELETE",
-                            headers: {
-                                "Authorization": `Bearer ${token}`
-                            }
-                        });
-
-                        if (response.ok) {
-                            showSuccess("Demande refusée avec succès");
-                            loadPendingRequests();
-                        } else {
-                            throw new Error("Erreur lors du refus de la demande");
-                        }
-                    } catch (error) {
-                        console.error("Erreur:", error);
-                        showError("Impossible de refuser la demande");
+    confirmDeleteBtn.addEventListener('click', async () => {
+        if (currentRequestId) {
+            try {
+                const response = await fetch(`https://backend-m6sm.onrender.com/admin/reject-user/${currentRequestId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
                     }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Erreur lors de la suppression');
                 }
-            });
-        });
-    }
 
-    // Gérer la confirmation d'acceptation
-    confirmBtn.addEventListener("click", async function() {
-        if (!selectedUserId) return;
-
-        try {
-            const response = await fetch(`https://backend-m6sm.onrender.com/admin/approve-user/${selectedUserId}`, {
-                method: "POST",
-                headers: {
-                    "Authorization": `Bearer ${token}`,
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    is_approved: true
-                })
-            });
-
-            if (response.ok) {
-                showSuccess("Compte créé avec succès");
+                showAlert('Demande supprimée avec succès', 'success');
                 loadPendingRequests();
                 loadExistingAccounts();
-            } else {
-                throw new Error("Erreur lors de la création du compte");
+
+            } catch (error) {
+                console.error('Erreur:', error);
+                showAlert('Erreur lors de la suppression', 'error');
             }
-        } catch (error) {
-            console.error("Erreur:", error);
-            showError("Impossible de créer le compte");
         }
-
-        modal.style.display = "none";
-        selectedUserId = null;
+        deletePopup.style.display = 'none';
     });
+}
 
-    // Gérer l'annulation
-    cancelBtn.addEventListener("click", function() {
-        modal.style.display = "none";
-        selectedUserId = null;
+// Fonction pour fermer le popup de suppression
+function closeDeleteConfirmPopup() {
+    document.getElementById('confirmDeletePopup').style.display = 'none';
+}
+
+// Fonction pour afficher les alertes
+function showAlert(message, type) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert ${type}`;
+    alertDiv.textContent = message;
+    document.body.appendChild(alertDiv);
+
+    setTimeout(() => {
+        alertDiv.remove();
+    }, 3000);
+}
+
+// Fonction de recherche
+document.getElementById('search-bar').addEventListener('input', function(e) {
+    const searchText = e.target.value.toLowerCase();
+    const tables = document.querySelectorAll('table');
+
+    tables.forEach(table => {
+        const rows = table.querySelectorAll('tbody tr');
+        rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            row.style.display = text.includes(searchText) ? '' : 'none';
+        });
     });
+});
 
-    // Fermer le modal en cliquant à l'extérieur
-    window.addEventListener("click", function(e) {
-        if (e.target == modal) {
-            modal.style.display = "none";
-            selectedUserId = null;
-        }
-    });
-
-    // Fonctions utilitaires
-    function showError(message) {
-        const errorDiv = document.createElement('div');
-        errorDiv.className = 'alert alert-error';
-        errorDiv.textContent = message;
-        document.body.appendChild(errorDiv);
-        setTimeout(() => errorDiv.remove(), 3000);
-    }
-
-    function showSuccess(message) {
-        const successDiv = document.createElement('div');
-        successDiv.className = 'alert alert-success';
-        successDiv.textContent = message;
-        document.body.appendChild(successDiv);
-        setTimeout(() => successDiv.remove(), 3000);
-    }
-
-    // Charger les données initiales
+// Chargement initial des données
+document.addEventListener('DOMContentLoaded', () => {
     loadPendingRequests();
     loadExistingAccounts();
 });
+
+// Styles pour les alertes
+const style = document.createElement('style');
+style.textContent = `
+    .alert {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 15px;
+        border-radius: 4px;
+        color: white;
+        z-index: 1000;
+        animation: slideIn 0.5s ease-out;
+    }
+    .success {
+        background-color: #4CAF50;
+    }
+    .error {
+        background-color: #f44336;
+    }
+    @keyframes slideIn {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+`;
+document.head.appendChild(style);
