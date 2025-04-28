@@ -1,28 +1,23 @@
 document.addEventListener("DOMContentLoaded", function () {
     // Éléments du DOM
-    const togglePassword = document.querySelector(".toggle-password");
-    const passwordInput = document.getElementById("password");
-    const emailInput = document.getElementById("email");
-    const form = document.querySelector("form");
+    const form = document.getElementById('loginForm');
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+    const togglePassword = document.querySelector('.toggle-password');
     const submitButton = form.querySelector('button[type="submit"]');
-    
-    // Variables de sécurité
-    let loginAttempts = 0;
-    const MAX_LOGIN_ATTEMPTS = 3;
-    const ADMIN_EMAIL = "admin@gig.dz";
 
-    // Fonction pour valider l'email
-    function isValidEmail(email) {
-        const emailRegex = /^[a-z]+(?:\.[a-z]+)*@GIG\.com$/;
-        return emailRegex.test(email);
+    // Gestion de l'affichage/masquage du mot de passe
+    if (togglePassword) {
+        togglePassword.addEventListener("click", function () {
+            const type = passwordInput.type === "password" ? "text" : "password";
+            passwordInput.type = type;
+        });
     }
 
     // Fonction pour afficher les messages d'erreur
     function showError(message) {
         const errorDiv = document.createElement('div');
         errorDiv.className = 'error-message';
-        errorDiv.style.color = 'red';
-        errorDiv.style.marginTop = '10px';
         errorDiv.textContent = message;
         
         // Supprimer l'ancien message d'erreur s'il existe
@@ -39,7 +34,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const successDiv = document.createElement('div');
         successDiv.className = 'success-message';
         successDiv.textContent = message;
-        document.body.appendChild(successDiv);
+        form.appendChild(successDiv);
         
         setTimeout(() => {
             successDiv.remove();
@@ -52,15 +47,6 @@ document.addEventListener("DOMContentLoaded", function () {
         submitButton.innerHTML = isLoading ? 
             '<span class="spinner"></span> Connexion en cours...' : 
             'Se connecter';
-    }
-
-    // Gestion de l'affichage/masquage du mot de passe
-    if (togglePassword) {
-        togglePassword.addEventListener("click", function () {
-            const type = passwordInput.type === "password" ? "text" : "password";
-            passwordInput.type = type;
-            togglePassword.textContent = type === "password" ? "👁️" : "👁️‍";
-        });
     }
 
     // Gestion de la soumission du formulaire
@@ -76,21 +62,10 @@ document.addEventListener("DOMContentLoaded", function () {
             return;
         }
 
-        if (!isValidEmail(email)) {
-            showError("Veuillez utiliser votre adresse email GIG (@GIG.com).");
-            return;
-        }
-
-        // Vérification spéciale pour le compte admin
-        if (email === ADMIN_EMAIL && password !== "admin123") {
-            showError("Mot de passe incorrect pour le compte administrateur.");
-            return;
-        }
-
         setLoading(true);
 
         try {
-            // 1. Connexion
+            // Connexion
             const response = await fetch("https://backend-m6sm.onrender.com/token", {
                 method: "POST",
                 headers: {
@@ -105,15 +80,11 @@ document.addEventListener("DOMContentLoaded", function () {
             const data = await response.json();
 
             if (response.ok) {
-                // Réinitialiser le compteur de tentatives en cas de succès
-                loginAttempts = 0;
-                
                 // Stocker le token
                 localStorage.setItem("token", data.access_token);
 
-                // 2. Récupérer les informations de l'utilisateur
+                // Récupérer les informations de l'utilisateur
                 const userResponse = await fetch("https://backend-m6sm.onrender.com/users/me", {
-                    method: "GET",
                     headers: {
                         "Authorization": `Bearer ${data.access_token}`
                     }
@@ -150,13 +121,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     throw new Error("Erreur lors de la récupération des informations utilisateur.");
                 }
             } else {
-                loginAttempts++;
-                
-                if (loginAttempts >= MAX_LOGIN_ATTEMPTS) {
-                    showError("Trop de tentatives. Veuillez réessayer plus tard.");
-                } else {
-                    showError(data.detail || "Email ou mot de passe incorrect.");
-                }
+                showError(data.detail || "Email ou mot de passe incorrect.");
             }
         } catch (err) {
             console.error("Erreur de requête :", err);
@@ -165,68 +130,4 @@ document.addEventListener("DOMContentLoaded", function () {
             setLoading(false);
         }
     });
-
-    // Redirection vers création de compte
-    const redirectButton = document.querySelector(".btn-submit1");
-    if (redirectButton) {
-        redirectButton.addEventListener("click", function () {
-            window.location.href = "../pages/Sign-in.html";
-        });
-    }
 });
-
-// Styles pour les messages
-const style = document.createElement('style');
-style.textContent = `
-    .success-message {
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        padding: 15px;
-        background-color: #4CAF50;
-        color: white;
-        border-radius: 4px;
-        z-index: 1000;
-        animation: slideIn 0.5s ease-out;
-    }
-    
-    .error-message {
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        padding: 15px;
-        background-color: #f44336;
-        color: white;
-        border-radius: 4px;
-        z-index: 1000;
-        animation: slideIn 0.5s ease-out;
-    }
-    
-    @keyframes slideIn {
-        from {
-            transform: translateX(100%);
-            opacity: 0;
-        }
-        to {
-            transform: translateX(0);
-            opacity: 1;
-        }
-    }
-
-    .spinner {
-        display: inline-block;
-        width: 20px;
-        height: 20px;
-        border: 3px solid #f3f3f3;
-        border-top: 3px solid #3498db;
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
-        margin-right: 10px;
-    }
-
-    @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
-`;
-document.head.appendChild(style);
