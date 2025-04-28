@@ -1,15 +1,18 @@
 document.addEventListener("DOMContentLoaded", function () {
+    // Éléments du DOM
     const togglePassword = document.querySelector(".toggle-password");
     const passwordInput = document.getElementById("password");
     const emailInput = document.getElementById("email");
     const form = document.querySelector("form");
     const submitButton = form.querySelector('button[type="submit"]');
+    
+    // Variables de sécurité
     let loginAttempts = 0;
     const MAX_LOGIN_ATTEMPTS = 3;
 
     // Fonction pour valider l'email
     function isValidEmail(email) {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const emailRegex = /^[a-z]+(?:\.[a-z]+)*@GIG\.com$/;
         return emailRegex.test(email);
     }
 
@@ -30,6 +33,18 @@ document.addEventListener("DOMContentLoaded", function () {
         form.appendChild(errorDiv);
     }
 
+    // Fonction pour afficher les messages de succès
+    function showSuccess(message) {
+        const successDiv = document.createElement('div');
+        successDiv.className = 'success-message';
+        successDiv.textContent = message;
+        document.body.appendChild(successDiv);
+        
+        setTimeout(() => {
+            successDiv.remove();
+        }, 3000);
+    }
+
     // Fonction pour gérer l'état de chargement
     function setLoading(isLoading) {
         submitButton.disabled = isLoading;
@@ -38,6 +53,7 @@ document.addEventListener("DOMContentLoaded", function () {
             'Se connecter';
     }
 
+    // Gestion de l'affichage/masquage du mot de passe
     if (togglePassword) {
         togglePassword.addEventListener("click", function () {
             const type = passwordInput.type === "password" ? "text" : "password";
@@ -46,6 +62,7 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
+    // Gestion de la soumission du formulaire
     form.addEventListener("submit", async function (event) {
         event.preventDefault();
 
@@ -59,7 +76,7 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
         if (!isValidEmail(email)) {
-            showError("Veuillez entrer une adresse email valide.");
+            showError("Veuillez utiliser votre adresse email GIG (@GIG.com).");
             return;
         }
 
@@ -104,6 +121,9 @@ document.addEventListener("DOMContentLoaded", function () {
                     localStorage.setItem("userRole", role);
                     localStorage.setItem("userData", JSON.stringify(userData.profile));
 
+                    // Afficher un message de succès
+                    showSuccess("Connexion réussie ! Redirection...");
+
                     // Redirection en fonction du rôle
                     const roleRoutes = {
                         "admin": "../pages/RH-dashboard.html",
@@ -113,7 +133,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
                     const redirectUrl = roleRoutes[role];
                     if (redirectUrl) {
-                        window.location.href = redirectUrl;
+                        setTimeout(() => {
+                            window.location.href = redirectUrl;
+                        }, 1000);
                     } else {
                         showError("Rôle non reconnu !");
                     }
@@ -145,3 +167,59 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 });
+
+// Styles pour les messages
+const style = document.createElement('style');
+style.textContent = `
+    .success-message {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 15px;
+        background-color: #4CAF50;
+        color: white;
+        border-radius: 4px;
+        z-index: 1000;
+        animation: slideIn 0.5s ease-out;
+    }
+    
+    .error-message {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 15px;
+        background-color: #f44336;
+        color: white;
+        border-radius: 4px;
+        z-index: 1000;
+        animation: slideIn 0.5s ease-out;
+    }
+    
+    @keyframes slideIn {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+
+    .spinner {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 3px solid #f3f3f3;
+        border-top: 3px solid #3498db;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-right: 10px;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+`;
+document.head.appendChild(style);
