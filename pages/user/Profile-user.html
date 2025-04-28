@@ -7,7 +7,8 @@
     <link rel="stylesheet" href="../../assets/styles/user/profile-user.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-</head><body>
+</head>
+<body>
     <header class="top-bar">
         <div class="menu-icon" onclick="toggleNav()">☰</div>
         <div class="sidebar" id="sidebar">
@@ -44,9 +45,13 @@
                <button id="deletePicBtn">Supprimer</button>
             </div>
         </div>
+
+      
     </header>
 
     <main class="profile-container">
+      
+        
         <form>
           <h2 class="mon-profile">Mon Profil</h2>
             <div class="form-group">
@@ -85,38 +90,47 @@
               </div>
             </div>
 
-            <section class="stats">
-              <h3>📊 Statistiques Globales</h3>
-              <p><strong>Total des Cours Suivis :</strong> <span id="totalCourses">0</span></p>
-              <p><strong>Cours Terminés :</strong> <span id="completedCourses">0</span></p>
-              <p><strong>Progression Moyenne :</strong> <span id="averageProgress">0%</span></p>
-            </section>
+            
+                  <!-- 🟢 Statistiques Générales -->
+        <section class="stats">
+          <h3>📊 Statistiques Globales</h3>
+          <p><strong>Total des Cours Suivis :</strong> <span id="totalCourses">0</span></p>
+          <p><strong>Cours Terminés :</strong> <span id="completedCourses">0</span></p>
+          <p><strong>Progression Moyenne :</strong> <span id="averageProgress">0%</span></p>
+        </section>
 
-            <section class="course-tracking">
-              <h3>📚 Mes Cours Suivis</h3>
-              <table>
-                  <thead>
-                      <tr>
-                          <th>Nom du Cours</th>
-                          <th>Progrès</th>
-                          <th>Date de Début</th>
-                          <th>Date de Fin</th>
-                          <th>Statut</th>
-                      </tr>
-                  </thead>
-                  <tbody id="courseTableBody">
-                  </tbody>
-              </table>
-            </section>
+      
 
-            <section class="skills">
-              <h3>🎯 Compétences Acquises</h3>
-              <ul id="skillsList">
-              </ul>
-            </section>
-        </form>
-    </main>
+      <!-- 🟢 Suivi des Cours -->
+      <section class="course-tracking">
+          <h3>📚 Mes Cours Suivis</h3>
+          <table>
+              <thead>
+                  <tr>
+                      <th>Nom du Cours</th>
+                      <th>Progrès</th>
+                      <th>Date de Début</th>
+                      <th>Date de Fin</th>
+                      <th>Statut</th>
+                  </tr>
+              </thead>
+              <tbody id="courseTableBody">
+                  <!-- Les cours seront ajoutés dynamiquement avec JavaScript -->
+              </tbody>
+          </table>
+      </section>
+
+      <!-- 🟢 Compétences Acquises -->
+      <section class="skills">
+          <h3>🎯 Compétences Acquises</h3>
+          <ul id="skillsList">
+              <!-- Les compétences seront ajoutées dynamiquement -->
+          </ul>
+      </section>
+      </form>
     
+    </main>
+
     <section class="contact" id="contact">
         <div class="container-contact">
             <div class="partie-g">

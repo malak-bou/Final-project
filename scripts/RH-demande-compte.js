@@ -1,138 +1,21 @@
-document.addEventListener("DOMContentLoaded", function () {
-    const token = localStorage.getItem("token");
-    if (!token) {
-        window.location.href = "../index.html";
-        return;
+
+
+
+// Function to open/close the sidebar
+function toggleSidebar() {
+    var sidebar = document.getElementById("sidebar");
+    // Check the current width of the sidebar and adjust it
+    if (sidebar.style.width === "250px") {
+        sidebar.style.width = "0"; // Close the sidebar
+    } else {
+        sidebar.style.width = "250px"; // Open the sidebar
     }
-
-    // Charger les demandes en attente et les comptes existants
-    loadPendingRequests();
-    loadExistingAccounts();
+}
 
 
-    // Function to handle 'Créer' button click
-    document.querySelectorAll(".create").forEach(button => {
-        button.addEventListener("click", async function () {
-            const userId = this.getAttribute("data-user-id");
-            try {
-                const response = await fetch(`https://backend-m6sm.onrender.com/admin/approve-user/${userId}`, {
-                    method: "POST",
-                    headers: {
-                        "Authorization": `Bearer ${token}`,
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        is_approved: true
-                    })
-                });
-
-                if (response.ok) {
-                    alert("Un nouveau compte a été créé !");
-                    loadPendingRequests();
-                    loadExistingAccounts();
-                } else {
-                    alert("Erreur lors de la création du compte");
-                }
-            } catch (error) {
-                console.error("Erreur:", error);
-                alert("Erreur lors de la création du compte");
-            }
-        });
-    });
-
-    // Function to handle 'Modifier' button click
-    document.querySelectorAll(".modify").forEach(button => {
-        button.addEventListener("click", function () {
-            const userId = this.getAttribute("data-user-id");
-            window.location.href = `RH-modify-user.html?id=${userId}`;
-        });
-    });
-
-    // Function to handle 'Supprimer' button click
-    document.querySelectorAll(".delete").forEach(button => {
-        button.addEventListener("click", async function () {
-            const userId = this.getAttribute("data-user-id");
-            if (confirm("Voulez-vous vraiment supprimer cet élément ?")) {
-                try {
-                    const response = await fetch(`https://backend-m6sm.onrender.com/admin/users/${userId}`, {
-                        method: "DELETE",
-                        headers: {
-                            "Authorization": `Bearer ${token}`
-                        }
-                    });
-
-                    if (response.ok) {
-                        this.closest("tr").remove();
-                        alert("Élément supprimé !");
-                        loadPendingRequests();
-                        loadExistingAccounts();
-                    } else {
-                        alert("Erreur lors de la suppression");
-                    }
-                } catch (error) {
-                    console.error("Erreur:", error);
-                    alert("Erreur lors de la suppression");
-                }
-            }
-        });
-    });
 
 
-    // Fonction pour charger les demandes en attente
-    async function loadPendingRequests() {
-        try {
-            const response = await fetch("https://backend-m6sm.onrender.com/admin/pending-users", {
-                headers: {
-                    "Authorization": `Bearer ${token}`
-                }
-            });
-
-            if (!response.ok) {
-                throw new Error("Erreur lors du chargement des demandes");
-            }
-
-            const users = await response.json();
-            displayPendingRequests(users);
-        } catch (error) {
-            console.error("Erreur:", error);
-            showError("Impossible de charger les demandes en attente");
-        }
-    }
-
-    // Fonction pour afficher les demandes en attente
-    function displayPendingRequests(users) {
-        const tbody = document.getElementById("requests-body");
-        if (!tbody) return;
-
-        if (users.length === 0) {
-            tbody.innerHTML = "<tr><td colspan='6'>Aucune demande en attente</td></tr>";
-            return;
-        }
-
-        tbody.innerHTML = users.map(user => `
-            <tr>
-                <td>${user.nom}</td>
-                <td>${user.prenom}</td>
-                <td>${user.departement}</td>
-                <td>${user.role}</td>
-                <td><button class="create" data-user-id="${user.id}">Créer</button></td>
-                <td><button class="delete" data-user-id="${user.id}">Supprimer</button></td>
-            </tr>
-        `).join("");
-
-        // Réattacher les événements aux nouveaux boutons
-        attachButtonEvents();
-    }
-
-    // Fonction pour charger les comptes existants
-    async function loadExistingAccounts() {
-        try {
-            const response = await fetch("https://backend-m6sm.onrender.com/public/users", {
-                headers: {
-                    "Authorization": `Bearer ${token}`
-                }
-            });
-
+// agrandissement de limage 
 
 
 
@@ -224,15 +107,6 @@ document.addEventListener("DOMContentLoaded", function () {
 // modify
 
 
-            const users = await response.json();
-            displayExistingAccounts(users);
-        } catch (error) {
-            console.error("Erreur:", error);
-            showError("Impossible de charger les comptes existants");
-        }
-    }
-
-
   let editRow = null;
 
   function showEditConfirmPopup() {
@@ -252,7 +126,6 @@ document.addEventListener("DOMContentLoaded", function () {
       // Remettre le bouton à "Modifier"
       editRow.querySelector(".modify").textContent = "Modifier";
       editRow = null;
-
     }
   
     // Fermer le popup
@@ -283,7 +156,6 @@ document.addEventListener("DOMContentLoaded", function () {
         }
       });
     });
-
 
     // Bouton "Oui" dans le pop-up
     document.getElementById("confirmEditBtn").addEventListener("click", function () {
@@ -331,4 +203,3 @@ document.addEventListener("DOMContentLoaded", function () {
     // appelle aussi d'autres fonctions ici si besoin
   };
   
-
