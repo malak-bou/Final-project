@@ -36,7 +36,7 @@ if (departementSelect) {
 const form = document.getElementById('signupForm');
 const emailInput = document.getElementById('email');
 const emailError = document.getElementById('emailError');
-const emailRegex = /^[a-z]+(?:\.[a-z]+)*@GIG\.com$/;
+const emailRegex = /^[a-zA-Z]+(?:\.[a-zA-Z]+)*@GIG\.com$/;
 
 // Fonction pour afficher les messages d'erreur
 function showError(message) {
