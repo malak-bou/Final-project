@@ -24,9 +24,9 @@ if (redirectButton1) {
     });
 }
 
-// Gestion du département et du rôle
+// Gestion du département et de la fonction
 const departementSelect = document.getElementById("departement");
-const roleSelect = document.getElementById("role");
+const fonctionSelect = document.getElementById("fonction");
 
 if (departementSelect) {
     departementSelect.addEventListener("change", function() {
@@ -34,9 +34,9 @@ if (departementSelect) {
     });
 }
 
-if (roleSelect) {
-    roleSelect.addEventListener("change", function() {
-        console.log("Rôle choisi:", this.value);
+if (fonctionSelect) {
+    fonctionSelect.addEventListener("change", function() {
+        console.log("Fonction choisie:", this.value);
     });
 }
 
@@ -72,22 +72,22 @@ function validateForm(formData) {
     }
     
     // Validation de la confirmation du mot de passe
-    if (formData.get('password') !== formData.get('confirmer-password')) {
+    if (formData.get('password') !== formData.get('confirm_password')) {
         errors.push('Les mots de passe ne correspondent pas');
     }
     
     // Validation des champs requis
-    const requiredFields = ['nom', 'prenom', 'departement', 'role'];
+    const requiredFields = ['nom', 'prenom', 'departement', 'fonction', 'email', 'telephone'];
     requiredFields.forEach(field => {
         if (!formData.get(field)) {
             errors.push(`Le champ ${field} est requis`);
         }
     });
     
-    // Validation spécifique du rôle
-    const role = formData.get('role');
-    if (role && !['etudiant', 'prof', 'admin'].includes(role)) {
-        errors.push('Rôle invalide. Choisissez entre étudiant, professeur ou administrateur');
+    // Validation spécifique de la fonction
+    const fonction = formData.get('fonction');
+    if (fonction && !['employee', 'professeur'].includes(fonction)) {
+        errors.push('Fonction invalide. Choisissez entre employé ou professeur');
     }
     
     return errors;
@@ -109,7 +109,8 @@ if (form) {
             email: formData.get('email'),
             password: formData.get('password'),
             departement: formData.get('departement'),
-            role: formData.get('role')
+            role: formData.get('fonction'), // Conversion de 'fonction' en 'role' pour le backend
+            telephone: formData.get('telephone')
         };
         
         // Valider le formulaire
