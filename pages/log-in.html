@@ -13,10 +13,10 @@
             <p>Bienvenue</p>
             <hr class="divider">
 
-            <form>
+            <!-- Ajout de l'ID au formulaire -->
+            <form id="loginForm">
                 <label for="email">Email Professionnel</label>
-                <input type="email" id="email" placeholder="Entrez votre email" required>
-
+                <input type="email" id="email" name="email" placeholder="Entrez votre email" required>
 
                 <label for="password">Mot de passe</label>
                 <div class="password-container">
@@ -38,6 +38,21 @@
             <img src="../assets/images/log-in-img.png" alt="Bureau de travail">
         </div>
     </main>
+
+    <!-- Ajout des styles pour les messages -->
+    <style>
+        .error-message {
+            color: red;
+            margin-top: 10px;
+            text-align: center;
+        }
+        .success-message {
+            color: green;
+            margin-top: 10px;
+            text-align: center;
+        }
+    </style>
+
     <script src="../scripts/log-in.js"></script>
 </body>
 </html>
