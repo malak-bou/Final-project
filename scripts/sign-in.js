@@ -24,11 +24,19 @@ if (redirectButton1) {
     });
 }
 
-// Gestion du département
+// Gestion du département et du rôle
 const departementSelect = document.getElementById("departement");
+const roleSelect = document.getElementById("role");
+
 if (departementSelect) {
     departementSelect.addEventListener("change", function() {
         console.log("Département choisi:", this.value);
+    });
+}
+
+if (roleSelect) {
+    roleSelect.addEventListener("change", function() {
+        console.log("Rôle choisi:", this.value);
     });
 }
 
@@ -75,6 +83,12 @@ function validateForm(formData) {
             errors.push(`Le champ ${field} est requis`);
         }
     });
+    
+    // Validation spécifique du rôle
+    const role = formData.get('role');
+    if (role && !['etudiant', 'prof', 'admin'].includes(role)) {
+        errors.push('Rôle invalide. Choisissez entre étudiant, professeur ou administrateur');
+    }
     
     return errors;
 }
@@ -124,9 +138,11 @@ if (form) {
             }
             
             // Succès
-            alert('Inscription réussie ! Votre compte est en attente de validation.');
+            showSuccess('Inscription réussie ! Votre compte est en attente de validation.');
             form.reset();
-            window.location.href = "../pages/log-in.html";
+            setTimeout(() => {
+                window.location.href = "../pages/log-in.html";
+            }, 2000);
             
         } catch (error) {
             console.error('Erreur:', error);
