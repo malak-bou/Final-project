@@ -1,4 +1,5 @@
 document.addEventListener("DOMContentLoaded", function () {
+
     // Gestion de l'affichage du mot de passe
     const togglePassword = document.querySelector(".toggle-password");
     const passwordInput = document.getElementById("password");
@@ -15,6 +16,7 @@ document.addEventListener("DOMContentLoaded", function () {
     form.addEventListener("submit", function (event) {
         event.preventDefault(); // Empêche l'envoi par défaut
 
+
         const email = emailInput.value.trim();
         const password = passwordInput.value.trim();
 
@@ -22,6 +24,7 @@ document.addEventListener("DOMContentLoaded", function () {
             alert("Veuillez remplir tous les champs.");
             return;
         }
+
 
         // Vérification des identifiants
         const validEmail = "moumouhalem6@gmail.com";
@@ -41,9 +44,11 @@ document.addEventListener("DOMContentLoaded", function () {
             }else {
                 alert("Email ou mot de passe incorrect.");
             }
+
             }
         }
     });
+
 
     // Redirection si on clique sur un bouton spécifique
     const redirectButton = document.querySelector(".btn-submit1");
@@ -52,4 +57,5 @@ document.addEventListener("DOMContentLoaded", function () {
             window.location.href = "../pages/Sign-in.html";
         });
     }
+
 });

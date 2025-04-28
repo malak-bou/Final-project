@@ -1,4 +1,67 @@
 
+// Vérification du token
+const token = localStorage.getItem('token');
+if (!token) {
+    window.location.href = '../index.html';
+}
+
+// Function to open/close the sidebar
+function toggleSidebar() {
+    var sidebar = document.getElementById("sidebar");
+    if (sidebar.style.width === "250px") {
+        sidebar.style.width = "0";
+    } else {
+        sidebar.style.width = "250px";
+    }
+}
+
+// Fermer la sidebar quand on clique en dehors
+document.addEventListener('click', (e) => {
+    const sidebar = document.getElementById('sidebar');
+    const menuIcon = document.querySelector('.menuicon');
+    
+    if (sidebar && !sidebar.contains(e.target) && !menuIcon.contains(e.target)) {
+        sidebar.style.width = "0";
+    }
+});
+
+// Fonction pour charger les demandes en attente
+async function loadPendingRequests() {
+    try {
+        const response = await fetch('https://backend-m6sm.onrender.com/admin/pending-users', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error('Erreur lors du chargement des demandes');
+        }
+
+        const requests = await response.json();
+        const requestsBody = document.getElementById('requests-body');
+        requestsBody.innerHTML = '';
+
+        if (requests.length === 0) {
+            const row = document.createElement('tr');
+            row.innerHTML = '<td colspan="6" style="text-align: center;">Aucune demande en attente</td>';
+            requestsBody.appendChild(row);
+            return;
+        }
+
+
+        requests.forEach(request => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${request.nom || ''}</td>
+                <td>${request.prenom || ''}</td>
+                <td>${request.departement || ''}</td>
+                <td>${request.role || ''}</td>
+                <td><button class="create" data-id="${request._id}">Valider</button></td>
+                <td><button class="delete" data-id="${request._id}">Supprimer</button></td>
+            `;
+            requestsBody.appendChild(row);
+        });
 
 
 // Function to open/close the sidebar
@@ -17,94 +80,219 @@ function toggleSidebar() {
 
 // agrandissement de limage 
 
+        setupModifyButtons();
+        setupDeleteButtons();
 
+    } catch (error) {
+        console.error('Erreur:', error);
+        showError('Erreur lors du chargement des comptes');
+    }
+}
 
+// Configuration des boutons de validation
+function setupValidationButtons() {
+    const modal = document.getElementById('confirmationModal');
+    const confirmBtn = document.getElementById('confirmBtn');
+    const cancelBtn = document.getElementById('cancelBtn');
+    let currentRequestId = null;
 
-
-  // Run filter every time the input changes
-  document.getElementById("search-bar").addEventListener("input", filterTable);
-
-  function filterTable() {
-    const searchValue = document.getElementById("search-bar").value.toLowerCase().trim();
-
-    // Rows from "Les demandes"
-    const requestsRows = document.querySelectorAll("#requests-body tr");
-
-    // Rows from "La liste des comptes"
-    const accountsRows = document.querySelectorAll(".accounts tbody tr");
-
-    filterRows(requestsRows, searchValue);
-    filterRows(accountsRows, searchValue);
-  }
-
-  function filterRows(rows, value) {
-    rows.forEach(row => {
-        const name = row.cells[0]?.textContent.toLowerCase();
-        const prenom = row.cells[1]?.textContent.toLowerCase();
-        
-
-      if (name.includes(value) || prenom.includes(value)) {
-        row.style.display = "";
-      } else {
-        row.style.display = "none";
-      }
+    document.querySelectorAll('.create').forEach(button => {
+        button.addEventListener('click', (e) => {
+            currentRequestId = e.target.dataset.id;
+            modal.style.display = 'block';
+        });
     });
-  }
 
-// valider le compet
+    confirmBtn.addEventListener('click', async () => {
+        if (currentRequestId) {
+            try {
+                const response = await fetch(`https://backend-m6sm.onrender.com/admin/approve-user/${currentRequestId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        is_approved: true
+                    })
+                });
 
+                if (!response.ok) {
+                    throw new Error('Erreur lors de la validation');
+                }
 
-document.addEventListener("DOMContentLoaded", function () {
-  const requestsBody = document.getElementById("requests-body");
-  const accountsBody = document.getElementById("accounts-body");
-  const modal = document.getElementById("confirmationModal");
-  const confirmBtn = document.getElementById("confirmBtn");
-  const cancelBtn = document.getElementById("cancelBtn");
+                showSuccess('Compte validé avec succès');
+                loadPendingRequests();
+                loadExistingAccounts();
 
-  let selectedRow = null;
+            } catch (error) {
+                console.error('Erreur:', error);
+                showError('Erreur lors de la validation');
+            }
+        }
+        modal.style.display = 'none';
+    });
 
-  requestsBody.addEventListener("click", function (e) {
-    if (e.target.classList.contains("create")) {
-      selectedRow = e.target.closest("tr");
-      modal.style.display = "block";
-    }
-  });
+    cancelBtn.addEventListener('click', () => {
+        modal.style.display = 'none';
+    });
+}
 
-  confirmBtn.addEventListener("click", function () {
-    if (selectedRow) {
-      const nom = selectedRow.cells[0].textContent;
-      const prenom = selectedRow.cells[1].textContent;
-      const department = selectedRow.cells[2].textContent;
-      const fonction = selectedRow.cells[3].textContent;
+// Configuration des boutons de modification
+function setupModifyButtons() {
+    const editPopup = document.getElementById('confirmEditPopup');
+    const confirmEditBtn = document.getElementById('confirmEditBtn');
+    let currentAccountId = null;
 
-      const newRow = document.createElement("tr");
-      newRow.innerHTML = `
-        <td>${nom}</td>
-        <td>${prenom}</td>
-        <td>${department}</td>
-        <td>${fonction}</td>
-        <td><button class="modify">Modifier</button></td>
-        <td><button class="delete">Supprimer</button></td>
-      `;
-      accountsBody.appendChild(newRow);
-      selectedRow.remove();
-    }
-    modal.style.display = "none";
-  });
+    document.querySelectorAll('.modify').forEach(button => {
+        button.addEventListener('click', (e) => {
+            currentAccountId = e.target.dataset.id;
+            const row = e.target.closest('tr');
+            
+            // Remplir le formulaire de modification
+            document.getElementById('editNom').value = row.cells[0].textContent;
+            document.getElementById('editPrenom').value = row.cells[1].textContent;
+            document.getElementById('editDepartement').value = row.cells[2].textContent;
+            document.getElementById('editRole').value = row.cells[3].textContent;
+            
+            editPopup.style.display = 'block';
+        });
+    });
 
-  cancelBtn.addEventListener("click", function () {
-    modal.style.display = "none";
-  });
+    confirmEditBtn.addEventListener('click', async () => {
+        if (currentAccountId) {
+            try {
+                const updatedData = {
+                    nom: document.getElementById('editNom').value,
+                    prenom: document.getElementById('editPrenom').value,
+                    departement: document.getElementById('editDepartement').value,
+                    role: document.getElementById('editRole').value
+                };
 
-  // Close modal when clicking outside
-  window.addEventListener("click", function (e) {
-    if (e.target == modal) {
-      modal.style.display = "none";
-    }
-  });
+                const response = await fetch(`https://backend-m6sm.onrender.com/admin/update-user/${currentAccountId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(updatedData)
+                });
+
+                if (!response.ok) {
+                    throw new Error('Erreur lors de la modification');
+                }
+
+                showSuccess('Compte modifié avec succès');
+                loadExistingAccounts();
+                closeEditConfirmPopup();
+
+            } catch (error) {
+                console.error('Erreur:', error);
+                showError('Erreur lors de la modification');
+            }
+        }
+    });
+}
+
+// Configuration des boutons de suppression
+function setupDeleteButtons() {
+    const deletePopup = document.getElementById('confirmDeletePopup');
+    const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+    let currentRequestId = null;
+
+    document.querySelectorAll('.delete').forEach(button => {
+        button.addEventListener('click', (e) => {
+            currentRequestId = e.target.dataset.id;
+            deletePopup.style.display = 'block';
+        });
+    });
+
+    confirmDeleteBtn.addEventListener('click', async () => {
+        if (currentRequestId) {
+            try {
+                const response = await fetch(`https://backend-m6sm.onrender.com/admin/users/${currentRequestId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Erreur lors de la suppression');
+                }
+
+                showSuccess('Compte supprimé avec succès');
+                loadPendingRequests();
+                loadExistingAccounts();
+
+            } catch (error) {
+                console.error('Erreur:', error);
+                showError('Erreur lors de la suppression');
+            }
+        }
+        deletePopup.style.display = 'none';
+    });
+}
+
+// Fonction pour fermer le popup de modification
+function closeEditConfirmPopup() {
+    document.getElementById('confirmEditPopup').style.display = 'none';
+}
+
+// Fonction pour fermer le popup de suppression
+function closeDeleteConfirmPopup() {
+    document.getElementById('confirmDeletePopup').style.display = 'none';
+}
+
+// Fonction pour afficher les messages d'erreur
+function showError(message) {
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'error-message';
+    errorDiv.textContent = message;
+    document.body.appendChild(errorDiv);
+
+    setTimeout(() => {
+        errorDiv.remove();
+    }, 3000);
+}
+
+// Fonction pour afficher les messages de succès
+function showSuccess(message) {
+    const successDiv = document.createElement('div');
+    successDiv.className = 'success-message';
+    successDiv.textContent = message;
+    document.body.appendChild(successDiv);
+
+    setTimeout(() => {
+        successDiv.remove();
+    }, 3000);
+}
+
+// Fonction de recherche
+document.getElementById('search-bar').addEventListener('input', function(e) {
+    const searchText = e.target.value.toLowerCase().trim();
+    const tables = document.querySelectorAll('table');
+
+    tables.forEach(table => {
+        const rows = table.querySelectorAll('tbody tr');
+        rows.forEach(row => {
+            const name = row.cells[0]?.textContent.toLowerCase();
+            const prenom = row.cells[1]?.textContent.toLowerCase();
+            
+            if (name.includes(searchText) || prenom.includes(searchText)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    });
 });
 
-// modify
+// Chargement initial des données
+document.addEventListener('DOMContentLoaded', () => {
+    loadPendingRequests();
+    loadExistingAccounts();
+});
 
 
   let editRow = null;
@@ -126,34 +314,15 @@ document.addEventListener("DOMContentLoaded", function () {
       // Remettre le bouton à "Modifier"
       editRow.querySelector(".modify").textContent = "Modifier";
       editRow = null;
+
     }
-  
-    // Fermer le popup
-    document.getElementById("confirmEditPopup").style.display = "none";
-  }
-  
-
-  document.addEventListener("DOMContentLoaded", function () {
-    // Gestion du bouton "Modifier"
-    document.querySelectorAll(".modify").forEach(btn => {
-      btn.addEventListener("click", function (e) {
-        const row = e.target.closest("tr");
-
-        if (e.target.textContent === "Modifier") {
-          for (let i = 0; i < 4; i++) {
-            const cell = row.cells[i];
-            const input = document.createElement("input");
-            input.defaultValue = cell.textContent;
-            input.value = cell.textContent;
-            cell.innerHTML = "";
-            cell.appendChild(input);
-          }
-          e.target.textContent = "Enregistrer";
-        } else {
-          // Stocker la ligne temporaire + montrer le pop-up
-          editRow = row;
-          showEditConfirmPopup();
+    
+    @keyframes slideIn {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
         }
+
       });
     });
 
