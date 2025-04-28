@@ -9,6 +9,7 @@ document.addEventListener("DOMContentLoaded", function () {
     // Variables de sécurité
     let loginAttempts = 0;
     const MAX_LOGIN_ATTEMPTS = 3;
+    const ADMIN_EMAIL = "admin@gig.dz";
 
     // Fonction pour valider l'email
     function isValidEmail(email) {
@@ -77,6 +78,12 @@ document.addEventListener("DOMContentLoaded", function () {
 
         if (!isValidEmail(email)) {
             showError("Veuillez utiliser votre adresse email GIG (@GIG.com).");
+            return;
+        }
+
+        // Vérification spéciale pour le compte admin
+        if (email === ADMIN_EMAIL && password !== "admin123") {
+            showError("Mot de passe incorrect pour le compte administrateur.");
             return;
         }
 
