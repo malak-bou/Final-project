@@ -1,96 +1,158 @@
-// side barre
+// Global variables
+let notifications = [];
+let currentNotification = null;
 
-    // Fonction pour gérer l'affichage de la barre de navigation
+// Function to handle navigation bar display
 function toggleNav() {
-        document.getElementById("sidebar").classList.toggle("active"); // Ajouter ou supprimer la classe active
+    document.getElementById("sidebar").classList.toggle("active");
 }
 
+// Function to fetch notifications from the backend
+async function fetchNotifications() {
+    try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            window.location.href = '/login.html';
+            return;
+        }
+
+        const response = await fetch('/notifications/', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to fetch notifications');
+        }
+
+        notifications = await response.json();
+        renderNotifications();
+    } catch (error) {
+        console.error('Error fetching notifications:', error);
+        showError('Failed to load notifications');
+    }
+}
+
+// Function to render notifications in the list
+function renderNotifications() {
+    const notificationsList = document.getElementById('notificationsList');
+    notificationsList.innerHTML = '';
+
+    notifications.forEach(notification => {
+        const li = document.createElement('li');
+        li.className = `notification ${notification.is_read ? '' : 'unread'}`;
+        li.dataset.id = notification.id;
+        li.dataset.content = notification.content;
+        li.dataset.type = notification.type;
+        li.dataset.timestamp = new Date(notification.created_at).toLocaleTimeString();
+        
+        li.innerHTML = `
+            ${notification.content}
+            <span class="timestamp">${new Date(notification.created_at).toLocaleTimeString()}</span>
+        `;
+        
+        li.onclick = () => showNotification(notification);
+        notificationsList.appendChild(li);
+    });
+}
 
 // Function to display a notification's content
-function showNotification(element) {
-    document.querySelector(".main-content").innerHTML = `<p>${element.innerText}</p>`;
-    element.classList.remove("unread"); // Mark as read
-    element.dataset.read = "true"; // Store read status in data attribute
-}
+function showNotification(notification) {
+    const contentArea = document.getElementById('notificationContent');
+    const backButton = document.getElementById('backButton');
+    const sidebar = document.querySelector('.sidebar1');
 
-// Function to filter only mentions
-function filterMentions() {
-    let notifications = document.querySelectorAll(".notification");
-    notifications.forEach((notif) => {
-        notif.style.display = notif.dataset.type === "mention" ? "block" : "none";
-    });
-}
-
-// Function to filter only unread notifications
-function filterUnread() {
-    let notifications = document.querySelectorAll(".notification");
-    notifications.forEach((notif) => {
-        notif.style.display = notif.classList.contains("unread") ? "block" : "none";
-    });
-}
-
-// Function to reset filter and show all notifications
-function showAllNotifications() {
-    document.querySelectorAll(".notification").forEach((notif) => {
-        notif.style.display = "block";
-    });
-}
-
-// Function to generate a timestamp in HH:MM format
-function getTimestamp() {
-    let now = new Date();
-    return `${now.getHours()}:${now.getMinutes().toString().padStart(2, "0")}`;
-}
-
-// Sort notifications by timestamp (latest first)
-function sortNotifications() {
-    let notificationList = document.querySelector(".notifications");
-    let notifications = Array.from(notificationList.children);
-    
-    notifications.sort((a, b) => {
-        let timeA = a.querySelector(".timestamp").innerText;
-        let timeB = b.querySelector(".timestamp").innerText;
-        return timeB.localeCompare(timeA);
-    });
-
-    // Re-append sorted notifications
-    notifications.forEach((notif) => notificationList.appendChild(notif));
-}
-
-// Initialize timestamps for unread notifications
-document.addEventListener("DOMContentLoaded", () => {
-    document.querySelectorAll(".notification.unread").forEach((notif) => {
-        notif.querySelector(".timestamp").innerText = getTimestamp();
-    });
-    sortNotifications(); // Sort after adding timestamps
-});
-
-
-function showNotification(element) {
-    let contentArea = document.querySelector(".main-content");
-    let backButton = document.getElementById("backButton");
-    let sidebar = document.querySelector(".sidebar1");
-
-    // Modifier le contenu de la notification
     contentArea.innerHTML = `
-        <span id="backButton" class="material-symbols-outlined" onclick="HideNotif()">arrow_back</span>
-        <div class="notif">${element.dataset.content}</div>`;
+        <div class="notification-details">
+            <h3>${notification.title || 'Notification'}</h3>
+            <p>${notification.content}</p>
+            <p class="timestamp">${new Date(notification.created_at).toLocaleString()}</p>
+        </div>
+    `;
 
-    // Cacher la sidebar et afficher le contenu principal
-    sidebar.classList.add("hidden");
-    contentArea.classList.add("visible");
+    backButton.style.display = 'block';
+    sidebar.classList.add('hidden');
+    contentArea.classList.add('visible');
+
+    // Mark notification as read
+    if (!notification.is_read) {
+        markNotificationAsRead(notification.id);
+    }
+
+    currentNotification = notification;
 }
 
-function HideNotif() {
-    let contentArea = document.querySelector(".main-content");
-    let sidebar = document.querySelector(".sidebar1");
+// Function to mark a notification as read
+async function markNotificationAsRead(notificationId) {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`/notifications/${notificationId}/read`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
 
-    // Réinitialiser le texte
-    contentArea.innerHTML = `<p>Sélectionnez une notification pour voir les détails.</p>`;
+        if (!response.ok) {
+            throw new Error('Failed to mark notification as read');
+        }
 
-    // Réafficher la sidebar et cacher le contenu
-    sidebar.classList.remove("hidden");
-    contentArea.classList.remove("visible");
+        // Update local state
+        const notification = notifications.find(n => n.id === notificationId);
+        if (notification) {
+            notification.is_read = true;
+            renderNotifications();
+        }
+    } catch (error) {
+        console.error('Error marking notification as read:', error);
+    }
 }
 
+// Function to hide notification details
+function hideNotification() {
+    const contentArea = document.getElementById('notificationContent');
+    const backButton = document.getElementById('backButton');
+    const sidebar = document.querySelector('.sidebar1');
 
+    contentArea.innerHTML = '<p>Sélectionnez une notification pour afficher son contenu.</p>';
+    backButton.style.display = 'none';
+    sidebar.classList.remove('hidden');
+    contentArea.classList.remove('visible');
+    currentNotification = null;
+}
+
+// Filter functions
+function filterMentions() {
+    const notifications = document.querySelectorAll('.notification');
+    notifications.forEach(notif => {
+        notif.style.display = notif.dataset.type === 'mention' ? 'block' : 'none';
+    });
+}
+
+function filterUnread() {
+    const notifications = document.querySelectorAll('.notification');
+    notifications.forEach(notif => {
+        notif.style.display = notif.classList.contains('unread') ? 'block' : 'none';
+    });
+}
+
+function showAllNotifications() {
+    document.querySelectorAll('.notification').forEach(notif => {
+        notif.style.display = 'block';
+    });
+}
+
+// Error handling function
+function showError(message) {
+    const contentArea = document.getElementById('notificationContent');
+    contentArea.innerHTML = `<div class="error">${message}</div>`;
+}
+
+// Initialize the page
+document.addEventListener('DOMContentLoaded', () => {
+    fetchNotifications();
+    
+    // Set up periodic refresh (every 30 seconds)
+    setInterval(fetchNotifications, 30000);
+});

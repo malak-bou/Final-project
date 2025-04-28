@@ -18,12 +18,6 @@ const togglePassword = document.querySelector(".toggle-password");
     
 
     // Redirection si on clique sur un bouton spécifique
-    const redirectButton = document.querySelector(".btn-submit");
-    if (redirectButton) {
-        redirectButton.addEventListener("click", function () {
-            window.location.href = "../pages/user/user-dashboard.html";
-        });
-    }
 
     const redirectButton1 = document.querySelector(".btn-submit1");
     if (redirectButton1) {
@@ -31,6 +25,7 @@ const togglePassword = document.querySelector(".toggle-password");
             window.location.href = "../pages/log-in.html";
         });
     }
+
 
 
     const departementSelect = document.getElementById("departement");
