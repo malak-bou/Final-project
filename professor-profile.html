@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Professor Profile</title>
+    <link rel="stylesheet" href="professor-profile.css">
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <div class="profile-header">
+                <img id="profilePic" src="./profil-pic.png" alt="Profile Picture">
+                <h2 id="professorName">Loading...</h2>
+                <p id="professorEmail">Loading...</p>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="#" class="active" data-section="dashboard">Dashboard</a></li>
+                    <li><a href="#" data-section="courses">My Courses</a></li>
+                    <li><a href="#" data-section="conferences">Conferences</a></li>
+                    <li><a href="#" data-section="messages">Messages</a></li>
+                    <li><a href="#" data-section="settings">Settings</a></li>
+                </ul>
+            </nav>
+        </div>
+
+        <main class="main-content">
+            <!-- Dashboard Section -->
+            <section id="dashboard" class="content-section active">
+                <h2>Dashboard</h2>
+                <div class="stats-container">
+                    <div class="stat-card">
+                        <h3>Total Courses</h3>
+                        <p id="totalCourses">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Active Students</h3>
+                        <p id="activeStudents">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Upcoming Conferences</h3>
+                        <p id="upcomingConferences">0</p>
+                    </div>
+                </div>
+                <div class="recent-activity">
+                    <h3>Recent Activity</h3>
+                    <div id="activityList"></div>
+                </div>
+            </section>
+
+            <!-- Courses Section -->
+            <section id="courses" class="content-section">
+                <h2>My Courses</h2>
+                <button id="createCourseBtn">Create New Course</button>
+                <div id="createCourseForm" style="display: none;">
+                    <form id="courseForm">
+                        <input type="text" id="courseTitle" placeholder="Course Title" required>
+                        <textarea id="courseDescription" placeholder="Course Description" required></textarea>
+                        <input type="text" id="courseSkills" placeholder="Skills (comma separated)" required>
+                        <button type="submit">Create Course</button>
+                    </form>
+                </div>
+                <div id="coursesList" class="courses-grid"></div>
+            </section>
+
+            <!-- Conferences Section -->
+            <section id="conferences" class="content-section">
+                <h2>Conferences</h2>
+                <button id="requestConferenceBtn">Request New Conference</button>
+                <div id="conferenceRequestForm" style="display: none;">
+                    <form id="conferenceForm">
+                        <input type="text" id="confName" placeholder="Conference Name" required>
+                        <input type="text" id="confDescription" placeholder="Description">
+                        <input type="text" id="confLink" placeholder="Conference Link">
+                        <input type="text" id="confType" placeholder="Type" required>
+                        <input type="text" id="confDepartment" placeholder="Department" required>
+                        <input type="date" id="confDate" required>
+                        <input type="time" id="confTime" required>
+                        <input type="file" id="confImage">
+                        <button type="submit">Submit Request</button>
+                    </form>
+                </div>
+                <div id="conferencesList" class="conferences-grid"></div>
+            </section>
+
+            <!-- Messages Section -->
+            <section id="messages" class="content-section">
+                <h2>Messages</h2>
+                <div class="messages-container">
+                    <div id="messagesList" class="messages-list"></div>
+                    <div class="message-form">
+                        <form id="sendMessageForm">
+                            <input type="number" id="receiverId" placeholder="Receiver ID">
+                            <textarea id="messageContent" placeholder="Your message"></textarea>
+                            <input type="file" id="messageFile">
+                            <button type="submit">Send Message</button>
+                        </form>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Settings Section -->
+            <section id="settings" class="content-section">
+                <h2>Settings</h2>
+                <form id="profileForm">
+                    <div class="form-group">
+                        <label for="profileName">Full Name</label>
+                        <input type="text" id="profileName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="profileEmail">Email</label>
+                        <input type="email" id="profileEmail" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="currentPassword">Current Password</label>
+                        <input type="password" id="currentPassword">
+                    </div>
+                    <div class="form-group">
+                        <label for="newPassword">New Password</label>
+                        <input type="password" id="newPassword">
+                    </div>
+                    <div class="form-group">
+                        <label for="confirmPassword">Confirm New Password</label>
+                        <input type="password" id="confirmPassword">
+                    </div>
+                    <button type="submit">Update Profile</button>
+                </form>
+            </section>
+        </main>
+    </div>
+
+    <script type="module" src="professor-profile.js"></script>
+</body>
+</html> 
